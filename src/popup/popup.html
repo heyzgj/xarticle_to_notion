@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Not Configured -->
+    <div id="state-unconfigured" class="state" hidden>
+      <div class="message">
+        <p>Please configure your Notion settings first.</p>
+        <button id="btn-open-options" class="btn btn-primary">Open Settings</button>
+      </div>
+    </div>
+
+    <!-- Not on Article page -->
+    <div id="state-no-article" class="state" hidden>
+      <div class="message">
+        <p>No X Article detected on this page.</p>
+        <p class="hint">Navigate to an X Article and try again.</p>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="state-loading" class="state" hidden>
+      <div class="spinner"></div>
+      <p>Extracting article...</p>
+    </div>
+
+    <!-- Preview + Save -->
+    <div id="state-preview" class="state" hidden>
+      <div class="article-preview">
+        <h2 id="preview-title"></h2>
+        <p class="meta">
+          <span id="preview-author"></span>
+          <span class="dot">&middot;</span>
+          <span id="preview-date"></span>
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label for="category-select">Category</label>
+        <div class="select-wrapper">
+          <select id="category-select">
+            <option value="">Select category...</option>
+          </select>
+        </div>
+        <div id="new-category-row" hidden>
+          <input type="text" id="new-category-input" placeholder="New category name">
+          <button id="btn-confirm-category" class="btn btn-small">Add</button>
+          <button id="btn-cancel-category" class="btn btn-small btn-ghost">Cancel</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tags-input">Tags <span class="optional">(optional)</span></label>
+        <input type="text" id="tags-input" placeholder="tag1, tag2, ...">
+      </div>
+
+      <button id="btn-save" class="btn btn-primary btn-full">Save to Notion</button>
+    </div>
+
+    <!-- Saving -->
+    <div id="state-saving" class="state" hidden>
+      <div class="spinner"></div>
+      <p>Saving to Notion...</p>
+    </div>
+
+    <!-- Success -->
+    <div id="state-success" class="state" hidden>
+      <div class="success-icon">&#10003;</div>
+      <p>Saved to Notion!</p>
+      <a id="link-notion-page" href="#" target="_blank" class="btn btn-primary btn-full">Open in Notion</a>
+    </div>
+
+    <!-- Error -->
+    <div id="state-error" class="state" hidden>
+      <div class="error-icon">!</div>
+      <p id="error-message">Something went wrong.</p>
+      <button id="btn-retry" class="btn btn-primary btn-full">Retry</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
