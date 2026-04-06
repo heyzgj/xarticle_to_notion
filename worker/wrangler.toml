@@ -3,5 +3,5 @@ main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
 [vars]
-NOTION_CLIENT_ID = ""
+NOTION_CLIENT_ID = "33ad872b-594c-8151-aa61-0037f0ff538b"
 # NOTION_CLIENT_SECRET goes in wrangler secrets, not here
