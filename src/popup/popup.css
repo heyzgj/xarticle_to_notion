@@ -1,215 +1,327 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@import '../shared/design-tokens.css';
+@import '../shared/base.css';
 
 body {
   width: 360px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
-  color: #1a1a1a;
-  background: #fff;
+  background: var(--surface);
 }
 
 #app {
-  padding: 16px;
-}
-
-.state {
   display: flex;
   flex-direction: column;
+}
+
+/* Header */
+.header {
+  display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 44px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-icon {
+  border-radius: 3px;
+}
+
+.header-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.header-action {
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-primary);
+  opacity: 0.35;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.header-action:hover {
+  opacity: 0.6;
+}
+
+/* States */
+.state {
+  padding: 16px;
+  animation: fadeUp var(--duration-normal) var(--ease-standard) both;
 }
 
 .state[hidden] {
   display: none !important;
 }
 
-/* Message */
-.message {
+/* Empty states */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  padding: 20px 0;
+  padding: 24px 0;
 }
 
-.message p {
+.empty-icon {
+  color: var(--text-disabled);
   margin-bottom: 12px;
-  color: #555;
 }
 
-.hint {
-  font-size: 12px;
-  color: #999 !important;
-}
-
-/* Article Preview */
-.article-preview {
-  width: 100%;
-  padding: 12px;
-  background: #f7f7f7;
-  border-radius: 8px;
+.empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
-.article-preview h2 {
+.empty-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Skeleton loading */
+.skeleton-card {
+  background: var(--background);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  margin-bottom: 8px;
+}
+
+.skeleton-line--long { width: 90%; }
+.skeleton-line--medium { width: 60%; }
+.skeleton-line--short { width: 40%; }
+
+.skeleton-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.skeleton-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-btn {
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  margin-top: 16px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Article card */
+.article-card {
+  background: var(--background);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 4px;
+}
+
+.article-title {
   font-size: 15px;
   font-weight: 600;
-  line-height: 1.4;
-  margin-bottom: 6px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin-bottom: 10px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.meta {
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.author-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.author-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta-sep {
+  margin: 0 5px;
+  color: var(--text-disabled);
   font-size: 12px;
-  color: #666;
 }
 
-.dot {
-  margin: 0 4px;
+.meta-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
-/* Form */
+/* Form toggle */
+.form-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  transition: color var(--duration-fast) ease;
+  font-family: inherit;
+}
+
+.form-toggle:hover {
+  color: var(--text-primary);
+}
+
+.toggle-chevron {
+  transition: transform var(--duration-fast) ease;
+}
+
+.form-toggle.expanded .toggle-chevron {
+  transform: rotate(180deg);
+}
+
+/* Form section */
+.form-section[hidden] {
+  display: none;
+}
+
 .form-group {
-  width: 100%;
   margin-bottom: 12px;
 }
 
-.form-group label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #555;
-  margin-bottom: 4px;
-}
-
-.optional {
-  font-weight: 400;
-  color: #999;
-}
-
-.select-wrapper {
-  position: relative;
-}
-
-select, input[type="text"] {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-select:focus, input[type="text"]:focus {
-  border-color: #1d9bf0;
-}
-
-#new-category-row {
+.new-category-row {
   display: flex;
   gap: 6px;
   margin-top: 6px;
   align-items: center;
 }
 
-#new-category-row[hidden] {
+.new-category-row[hidden] {
   display: none;
 }
 
-#new-category-input {
+.new-category-row .input {
   flex: 1;
 }
 
-/* Buttons */
-.btn {
-  display: inline-flex;
+/* Action area */
+.action-area {
+  margin-top: 8px;
+}
+
+/* Save button states */
+.btn-saving {
+  background: var(--brand) !important;
+  pointer-events: none;
+}
+
+.btn-success {
+  background: var(--success) !important;
+  pointer-events: none;
+}
+
+/* Inline error */
+.inline-error {
+  background: var(--error-bg);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+
+.inline-error[hidden] {
+  display: none;
+}
+
+.inline-error p {
+  font-size: 13px;
+  color: var(--error);
+  line-height: 1.4;
+}
+
+/* Notion link */
+.notion-link {
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  gap: 4px;
+  font-size: 13px;
   font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s, opacity 0.2s;
-}
-
-.btn:hover {
-  opacity: 0.9;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #1d9bf0;
-  color: #fff;
-}
-
-.btn-small {
-  padding: 4px 10px;
-  font-size: 12px;
-}
-
-.btn-ghost {
-  background: transparent;
-  color: #666;
-  border: 1px solid #ddd;
-}
-
-.btn-full {
-  width: 100%;
-}
-
-/* Spinner */
-.spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid #e0e0e0;
-  border-top-color: #1d9bf0;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Success / Error icons */
-.success-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #22c55e;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.error-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #ef4444;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-a.btn {
+  color: var(--brand);
   text-decoration: none;
-  text-align: center;
+  padding: 8px 0;
+  margin-top: 4px;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.notion-link[hidden] {
+  display: none;
+}
+
+.notion-link:hover {
+  opacity: 0.8;
+}
+
+.form-disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
