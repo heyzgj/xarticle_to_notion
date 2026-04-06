@@ -1,0 +1,36 @@
+:root {
+  /* Colors */
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --text-disabled: #D1D5DB;
+  --surface: #FFFFFF;
+  --background: #FAFAFA;
+  --border: #E5E7EB;
+  --brand: #1d9bf0;
+  --brand-hover: #1a8cd8;
+  --brand-active: #1680c9;
+  --success: #10B981;
+  --error: #DC2626;
+  --error-bg: #FEF2F2;
+  --error-border: #FECACA;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-button-hover: 0 2px 8px rgba(29,155,240,0.25);
+  --shadow-focus: 0 0 0 3px rgba(29,155,240,0.12);
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 300ms;
+}
