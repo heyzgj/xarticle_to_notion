@@ -11,4 +11,10 @@ export type Message =
   | { type: 'SAVE_TO_NOTION'; article: ArticleData; category: string; tags: string[] }
   | { type: 'SAVE_RESULT'; success: boolean; pageUrl?: string; error?: string }
   | { type: 'CHECK_CONFIGURED' }
-  | { type: 'CONFIGURED_RESULT'; configured: boolean };
+  | { type: 'CONFIGURED_RESULT'; configured: boolean }
+  | { type: 'CREATE_DATABASE' }
+  | { type: 'CREATE_DATABASE_RESULT'; success: boolean; databaseId?: string; error?: string }
+  | { type: 'LIST_DATABASES' }
+  | { type: 'LIST_DATABASES_RESULT'; databases: Array<{ id: string; title: string }> }
+  | { type: 'GET_CONNECTION_STATUS' }
+  | { type: 'CONNECTION_STATUS'; connected: boolean; workspaceName?: string; databaseName?: string };

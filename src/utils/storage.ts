@@ -14,3 +14,12 @@ export async function saveSettings(settings: ExtensionSettings): Promise<void> {
 export function isConfigured(settings: ExtensionSettings | null): boolean {
   return !!(settings?.notionApiToken && settings?.databaseId);
 }
+
+export async function getFormExpanded(): Promise<boolean> {
+  const result = await chrome.storage.local.get('formExpanded');
+  return result.formExpanded ?? false;
+}
+
+export async function setFormExpanded(expanded: boolean): Promise<void> {
+  await chrome.storage.local.set({ formExpanded: expanded });
+}
