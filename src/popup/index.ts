@@ -1,3 +1,4 @@
+import './popup.css';
 import type { Message } from '../types/messages';
 import type { ArticleData } from '../types/article';
 import { getFormExpanded, setFormExpanded } from '../utils/storage';

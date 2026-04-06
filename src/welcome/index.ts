@@ -1,3 +1,4 @@
+import './welcome.css';
 import type { Message } from '../types/messages';
 import { saveSettings, getSettings } from '../utils/storage';
 import { OAUTH_WORKER_URL } from '../utils/constants';

@@ -8,6 +8,7 @@ module.exports = {
     background: './src/background/index.ts',
     popup: './src/popup/index.ts',
     options: './src/options/index.ts',
+    welcome: './src/welcome/index.ts',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -35,9 +36,8 @@ module.exports = {
       patterns: [
         { from: 'public', to: '.' },
         { from: 'src/popup/popup.html', to: 'popup.html' },
-        { from: 'src/popup/popup.css', to: 'popup.css' },
         { from: 'src/options/options.html', to: 'options.html' },
-        { from: 'src/options/options.css', to: 'options.css' },
+        { from: 'src/welcome/welcome.html', to: 'welcome.html' },
       ],
     }),
     new MiniCssExtractPlugin({

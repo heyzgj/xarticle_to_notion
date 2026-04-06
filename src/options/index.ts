@@ -1,3 +1,4 @@
+import './options.css';
 import type { Message } from '../types/messages';
 import { getSettings, saveSettings, getFormExpanded, setFormExpanded } from '../utils/storage';
 import { OAUTH_WORKER_URL } from '../utils/constants';
