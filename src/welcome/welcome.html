@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X Article to Notion</title>
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+  <div class="container">
+
+    <!-- Step 1: Connect -->
+    <div id="step-connect" class="step">
+      <div class="hero">
+        <img src="icons/icon128.png" alt="X2Notion" class="hero-icon" width="64" height="64">
+        <h1>X Article to Notion</h1>
+        <p class="subtitle">Save X articles to Notion in one click.</p>
+      </div>
+
+      <div class="how-it-works">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">Read an article on X</div>
+            <div class="step-desc">Find a long-form post worth keeping</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Click the extension icon</div>
+            <div class="step-desc">We'll detect and preview the article</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Saved to Notion</div>
+            <div class="step-desc">Title, author, full text — all captured</div>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-connect" class="btn btn-primary btn-large btn-full">
+        Connect to Notion
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <p class="privacy">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M12 7H4a1 1 0 00-1 1v5a1 1 0 001 1h8a1 1 0 001-1V8a1 1 0 00-1-1z" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Your data stays in your browser. We never store or access your Notion content.
+      </p>
+    </div>
+
+    <!-- Step 2: Choose database -->
+    <div id="step-database" class="step" hidden>
+      <div class="hero">
+        <div class="check-circle animate-in">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path class="check-path" d="M10 16l4 4 8-8" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>Connected!</h1>
+        <p class="subtitle">Where should we save your articles?</p>
+      </div>
+
+      <div class="db-options">
+        <button id="btn-create-db" class="db-option db-option--recommended">
+          <div class="db-option-badge">Recommended</div>
+          <div class="db-option-title">Create "X2Notion" for me</div>
+          <div class="db-option-desc">We'll set up a ready-to-go database in your Notion workspace.</div>
+        </button>
+
+        <button id="btn-existing-db" class="db-option">
+          <div class="db-option-title">Use an existing database</div>
+          <div class="db-option-desc">Pick one you've already set up.</div>
+        </button>
+      </div>
+
+      <div id="db-picker" hidden>
+        <select id="db-select" class="input">
+          <option value="">Select a database...</option>
+        </select>
+        <button id="btn-use-selected" class="btn btn-primary btn-full" style="margin-top: 12px" disabled>Use this database</button>
+      </div>
+
+      <div id="db-loading" hidden>
+        <div class="spinner spinner--dark" style="width: 24px; height: 24px; border-width: 3px; margin: 20px auto;"></div>
+        <p class="text-center text-muted">Setting up your database...</p>
+      </div>
+    </div>
+
+    <!-- Step 3: All set -->
+    <div id="step-done" class="step" hidden>
+      <div class="hero">
+        <div class="check-circle animate-in">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path class="check-path" d="M10 16l4 4 8-8" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h1>You're all set!</h1>
+        <p class="subtitle">Articles will be saved to: <strong id="db-name">X2Notion</strong></p>
+      </div>
+
+      <div class="next-step">
+        <p>Now visit any X article and click the extension icon in your toolbar.</p>
+      </div>
+    </div>
+
+  </div>
+  <script src="welcome.js"></script>
+</body>
+</html>
