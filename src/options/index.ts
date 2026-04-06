@@ -1,67 +1,52 @@
-import { getSettings, saveSettings } from '../utils/storage';
-import { testConnection } from '../background/notionApi';
+import type { Message } from '../types/messages';
+import { getSettings, saveSettings, getFormExpanded, setFormExpanded } from '../utils/storage';
+import { OAUTH_WORKER_URL } from '../utils/constants';
 
-const tokenInput = document.getElementById('notion-token') as HTMLInputElement;
-const databaseInput = document.getElementById('database-id') as HTMLInputElement;
-const btnTest = document.getElementById('btn-test')!;
-const btnSave = document.getElementById('btn-save')!;
-const statusEl = document.getElementById('status')!;
+const statusConnected = document.getElementById('status-connected')!;
+const statusDisconnected = document.getElementById('status-disconnected')!;
+const workspaceName = document.getElementById('workspace-name')!;
+const databaseName = document.getElementById('database-name')!;
+const btnDisconnect = document.getElementById('btn-disconnect')!;
+const btnConnect = document.getElementById('btn-connect')!;
+const toggleExpand = document.getElementById('toggle-expand') as HTMLInputElement;
 
-function showStatus(message: string, type: 'success' | 'error') {
-  statusEl.textContent = message;
-  statusEl.className = `status ${type}`;
-  statusEl.hidden = false;
+async function sendMessage(msg: Message): Promise<Message> {
+  return chrome.runtime.sendMessage(msg);
 }
 
-// Load existing settings
-async function loadSettings() {
-  const settings = await getSettings();
-  if (settings) {
-    tokenInput.value = settings.notionApiToken;
-    databaseInput.value = settings.databaseId;
+async function loadStatus() {
+  const result = await sendMessage({ type: 'GET_CONNECTION_STATUS' });
+  if (result.type !== 'CONNECTION_STATUS') return;
+
+  if (result.connected) {
+    statusConnected.hidden = false;
+    statusDisconnected.hidden = true;
+    workspaceName.textContent = result.workspaceName ?? '—';
+    databaseName.textContent = result.databaseName ?? '—';
+  } else {
+    statusConnected.hidden = true;
+    statusDisconnected.hidden = false;
   }
 }
 
-// Test connection
-btnTest.addEventListener('click', async () => {
-  const token = tokenInput.value.trim();
-  const dbId = databaseInput.value.trim();
+async function loadPreferences() {
+  toggleExpand.checked = await getFormExpanded();
+}
 
-  if (!token || !dbId) {
-    showStatus('Please fill in both fields.', 'error');
-    return;
-  }
-
-  btnTest.textContent = 'Testing...';
-  (btnTest as HTMLButtonElement).disabled = true;
-
-  try {
-    const ok = await testConnection(token, dbId);
-    if (ok) {
-      showStatus('Connection successful! Your Notion database is accessible.', 'success');
-    } else {
-      showStatus('Connection failed. Check your token and database ID.', 'error');
-    }
-  } catch (err) {
-    showStatus(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
-  } finally {
-    btnTest.textContent = 'Test Connection';
-    (btnTest as HTMLButtonElement).disabled = false;
-  }
+btnDisconnect.addEventListener('click', async () => {
+  if (!confirm('Disconnect from Notion? You can reconnect anytime.')) return;
+  await saveSettings({ notionApiToken: '', databaseId: '' });
+  loadStatus();
 });
 
-// Save settings
-btnSave.addEventListener('click', async () => {
-  const token = tokenInput.value.trim();
-  const dbId = databaseInput.value.trim();
-
-  if (!token || !dbId) {
-    showStatus('Please fill in both fields.', 'error');
-    return;
-  }
-
-  await saveSettings({ notionApiToken: token, databaseId: dbId });
-  showStatus('Settings saved!', 'success');
+btnConnect.addEventListener('click', () => {
+  const extensionId = chrome.runtime.id;
+  window.location.href = `${OAUTH_WORKER_URL}/auth?extension_id=${extensionId}`;
 });
 
-loadSettings();
+toggleExpand.addEventListener('change', () => {
+  setFormExpanded(toggleExpand.checked);
+});
+
+loadStatus();
+loadPreferences();

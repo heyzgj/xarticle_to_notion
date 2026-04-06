@@ -3,42 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>X Article to Notion - Settings</title>
+  <title>X Article to Notion — Settings</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
   <div class="container">
-    <h1>X Article to Notion</h1>
-    <p class="subtitle">Configure your Notion integration</p>
+    <h1>Settings</h1>
 
-    <div class="form-group">
-      <label for="notion-token">Notion API Token</label>
-      <input type="password" id="notion-token" placeholder="secret_...">
-      <p class="help">
-        Get your token at
-        <a href="https://www.notion.so/my-integrations" target="_blank">notion.so/my-integrations</a>.
-        Create an internal integration and copy the token.
-      </p>
+    <div class="card">
+      <h2 class="card-title">Connection</h2>
+      <div id="status-connected" hidden>
+        <div class="connection-status">
+          <div class="status-dot status-dot--connected"></div>
+          <span>Connected</span>
+        </div>
+        <div class="connection-details">
+          <div class="detail-row">
+            <span class="detail-label">Workspace</span>
+            <span id="workspace-name" class="detail-value">—</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Database</span>
+            <span id="database-name" class="detail-value">—</span>
+          </div>
+        </div>
+        <button id="btn-disconnect" class="link-danger">Disconnect</button>
+      </div>
+      <div id="status-disconnected" hidden>
+        <div class="connection-status">
+          <div class="status-dot"></div>
+          <span>Not connected</span>
+        </div>
+        <button id="btn-connect" class="btn btn-primary" style="margin-top:12px">Connect to Notion</button>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="database-id">Database ID</label>
-      <input type="text" id="database-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
-      <p class="help">
-        Open your Notion database as a full page. The Database ID is in the URL:<br>
-        <code>notion.so/workspace/<strong>{database_id}</strong>?v=...</code><br>
-        Make sure your integration is connected to this database (Share > Invite).
-      </p>
+    <div class="card">
+      <h2 class="card-title">Preferences</h2>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Expand category & tags by default</div>
+          <div class="toggle-desc">Show the form fields when opening the popup</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-expand">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
 
-    <div class="actions">
-      <button id="btn-test" class="btn btn-secondary">Test Connection</button>
-      <button id="btn-save" class="btn btn-primary">Save Settings</button>
-    </div>
-
-    <div id="status" class="status" hidden></div>
+    <p class="version">v1.0.0</p>
   </div>
-
   <script src="options.js"></script>
 </body>
 </html>
