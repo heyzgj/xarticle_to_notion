@@ -233,6 +233,46 @@ function splitRichTextBlocks(
   return blocks;
 }
 
+export async function createX2NotionDatabase(token: string): Promise<{ id: string }> {
+  const searchResult = await notionFetch('/search', 'POST', {
+    filter: { value: 'page', property: 'object' },
+    page_size: 1,
+  }) as { results: Array<{ id: string }> };
+
+  const parent = searchResult.results.length > 0
+    ? { type: 'page_id' as const, page_id: searchResult.results[0].id }
+    : { type: 'workspace' as const, workspace: true };
+
+  const result = await notionFetch('/databases', 'POST', {
+    parent,
+    title: [{ type: 'text', text: { content: 'X2Notion' } }],
+    properties: {
+      Title: { title: {} },
+      URL: { url: {} },
+      Author: { rich_text: {} },
+      Handle: { rich_text: {} },
+      Published: { date: {} },
+      Saved: { date: {} },
+      Category: { select: { options: [] } },
+      Tags: { multi_select: { options: [] } },
+    },
+  }) as { id: string };
+
+  return { id: result.id };
+}
+
+export async function listDatabases(): Promise<Array<{ id: string; title: string }>> {
+  const result = await notionFetch('/search', 'POST', {
+    filter: { value: 'database', property: 'object' },
+    page_size: 50,
+  }) as { results: Array<{ id: string; title: Array<{ plain_text: string }> }> };
+
+  return result.results.map(db => ({
+    id: db.id,
+    title: db.title.map(t => t.plain_text).join('') || 'Untitled',
+  }));
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

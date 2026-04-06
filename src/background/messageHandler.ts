@@ -1,6 +1,6 @@
 import type { Message } from '../types/messages';
-import { getSettings, isConfigured } from '../utils/storage';
-import { saveArticle } from './notionApi';
+import { getSettings, isConfigured, saveSettings } from '../utils/storage';
+import { saveArticle, getCategories, createX2NotionDatabase, listDatabases } from './notionApi';
 import { getCachedCategories, invalidateCache } from './categoryCache';
 
 export async function handleMessage(message: Message): Promise<Message> {
@@ -20,21 +20,58 @@ export async function handleMessage(message: Message): Promise<Message> {
     }
 
     case 'CREATE_CATEGORY': {
-      // Categories are auto-created by Notion when first used in a select property
-      // Just invalidate cache so the new one shows up next time
       await invalidateCache();
       return { type: 'CREATE_CATEGORY_RESULT', success: true };
     }
 
     case 'SAVE_TO_NOTION': {
       try {
-        const page = await saveArticle(message.article, message.category, message.tags);
+        const result = await saveArticle(message.article, message.category, message.tags);
         await invalidateCache();
-        return { type: 'SAVE_RESULT', success: true, pageUrl: page.url };
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-        return { type: 'SAVE_RESULT', success: false, error: errorMsg };
+        return { type: 'SAVE_RESULT', success: true, pageUrl: result.url };
+      } catch (e) {
+        return { type: 'SAVE_RESULT', success: false, error: (e as Error).message };
       }
+    }
+
+    case 'CREATE_DATABASE': {
+      try {
+        const settings = await getSettings();
+        if (!settings?.notionApiToken) {
+          return { type: 'CREATE_DATABASE_RESULT', success: false, error: 'Not connected' };
+        }
+        const db = await createX2NotionDatabase(settings.notionApiToken);
+        await saveSettings({
+          ...settings,
+          databaseId: db.id,
+          databaseName: 'X2Notion',
+        });
+        return { type: 'CREATE_DATABASE_RESULT', success: true, databaseId: db.id };
+      } catch (e) {
+        return { type: 'CREATE_DATABASE_RESULT', success: false, error: (e as Error).message };
+      }
+    }
+
+    case 'LIST_DATABASES': {
+      try {
+        const databases = await listDatabases();
+        return { type: 'LIST_DATABASES_RESULT', databases };
+      } catch {
+        return { type: 'LIST_DATABASES_RESULT', databases: [] };
+      }
+    }
+
+    case 'GET_CONNECTION_STATUS': {
+      const settings = await getSettings();
+      if (!isConfigured(settings)) {
+        return { type: 'CONNECTION_STATUS', connected: false };
+      }
+      return {
+        type: 'CONNECTION_STATUS',
+        connected: true,
+        workspaceName: settings!.workspaceName,
+        databaseName: settings!.databaseName,
+      };
     }
 
     default:
