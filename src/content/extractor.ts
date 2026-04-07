@@ -228,62 +228,68 @@ function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set
       continue;
     }
 
-    // Container — recurse, but also check for direct content
-    const innerText = (child.innerText ?? '').trim();
-    const hasBlockChildren = !!child.querySelector(
-      'div, p, article, section, ul, ol, blockquote, h1, h2, h3, h4, h5, h6, figure, picture, hr, img'
-    );
+    // Container (div / span / section / article / etc.)
 
-    if (hasBlockChildren) {
-      // X often uses nested <div>s for inline layout (flex rows). If all the
-      // visible children of this container sit on the same horizontal line,
-      // treat the whole container as ONE inline flow (single paragraph) so we
-      // don't shred a sentence into one block per word/link.
-      if (shouldFlattenAsInline(child)) {
-        emitParagraph(child, blocks);
-      } else {
-        walkStructured(child, blocks, seenImages);
-      }
+    // If this container has any real block elements (headings, lists,
+    // quotes, dividers, paragraphs) or images anywhere in its subtree,
+    // we MUST recurse so those don't get swallowed into a paragraph.
+    const hasRealBlockOrImage = !!child.querySelector(
+      'h1, h2, h3, h4, h5, h6, ul, ol, blockquote, hr, figure, picture, img, p'
+    );
+    if (hasRealBlockOrImage) {
+      walkStructured(child, blocks, seenImages);
       continue;
     }
 
-    // Leaf div with text — treat as paragraph
-    if (innerText && !isNoiseText(innerText)) {
+    // Pure inline content (text + spans + anchors + nested divs with no
+    // real block elements). Decide: one paragraph or multiple stacked ones?
+    const innerText = (child.innerText ?? '').trim();
+    if (!innerText || isNoiseText(innerText)) continue;
+
+    const subChildren = Array.from(child.children) as HTMLElement[];
+    if (subChildren.length === 0) {
+      // Just text — emit as one paragraph
+      emitParagraph(child, blocks);
+      continue;
+    }
+
+    // Multiple element children: check if they're visually stacked or inline.
+    // X uses nested <div>s for both vertical layouts AND flex-row layouts;
+    // tag names alone can't tell us which. Use rendered geometry instead.
+    if (areChildrenVerticallyStacked(subChildren)) {
+      walkStructured(child, blocks, seenImages);
+    } else {
       emitParagraph(child, blocks);
     }
   }
 }
 
-function shouldFlattenAsInline(parent: HTMLElement): boolean {
-  const children = Array.from(parent.children) as HTMLElement[];
-  if (children.length < 2) return false;
-
-  // Skip if any child is a real block element (heading, list, image, etc.)
-  for (const child of children) {
-    const tag = child.tagName.toLowerCase();
-    if (
-      tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6' ||
-      tag === 'ul' || tag === 'ol' || tag === 'blockquote' || tag === 'hr' ||
-      tag === 'figure' || tag === 'picture' || tag === 'img' || tag === 'p'
-    ) {
-      return false;
-    }
+/**
+ * Returns true if any two element children are on different visual lines.
+ * Uses vertical-range overlap rather than top-equality so it's robust to
+ * per-child padding/margin differences. Falls back to "not stacked" when
+ * geometry is unavailable (so callers default to flattening — safer for
+ * inline content like "(@user)" that we don't want to shred).
+ */
+function areChildrenVerticallyStacked(els: HTMLElement[]): boolean {
+  const rects: DOMRect[] = [];
+  for (const el of els) {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) rects.push(r);
   }
+  if (rects.length < 2) return false;
 
-  // Collect rendered top positions of visible children
-  const tops: number[] = [];
-  for (const child of children) {
-    const rect = child.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      tops.push(rect.top);
-    }
+  // Sort by top so we can compare consecutive rects
+  rects.sort((a, b) => a.top - b.top);
+
+  // If any consecutive pair doesn't overlap vertically, they're stacked
+  for (let i = 1; i < rects.length; i++) {
+    const prev = rects[i - 1];
+    const curr = rects[i];
+    // 2px tolerance for sub-pixel rounding
+    if (prev.bottom < curr.top - 2) return true;
   }
-  if (tops.length < 2) return false;
-
-  // All visible children on roughly the same horizontal line?
-  const minTop = Math.min(...tops);
-  const maxTop = Math.max(...tops);
-  return (maxTop - minTop) < 8;
+  return false;
 }
 
 function emitListItems(
