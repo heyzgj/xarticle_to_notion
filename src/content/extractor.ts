@@ -181,23 +181,10 @@ function extractDate(): string {
 
 function extractTitleWithSource(): { title: string; source: TitleSource } {
   const primary = document.querySelector('[data-testid="primaryColumn"]') as HTMLElement | null;
-  const articleEl = primary?.querySelector('article') as HTMLElement | null;
 
-  // 1. Look for substantial headings INSIDE the <article> element. The
-  //    article's own h1/h2 is the actual title, not random h1s in primary
-  //    column UI chrome (X uses h1 for things like "Article" labels).
-  if (articleEl) {
-    const headings = Array.from(articleEl.querySelectorAll('h1, h2')) as HTMLElement[];
-    for (const h of headings) {
-      const text = h.textContent?.trim() ?? '';
-      if (text.length >= 10 && !isGenericTitle(text)) {
-        return { title: text, source: 'heading' };
-      }
-    }
-  }
-
-  // 2. document.title — X usually puts the article title here for shareable
-  //    article URLs.
+  // 1. document.title — X uses this for shareable article titles. This is
+  //    the most reliable source: it's set by X to the actual article title,
+  //    not random h1s scattered through the body.
   let docTitle = document.title;
   const onXMatch = docTitle.match(/^.+?\son X:?\s*["\u201C']?(.+?)["\u201D']?\s*(?:[\/|·]\s*X)?\s*$/i);
   if (onXMatch && onXMatch[1]) {
@@ -210,7 +197,19 @@ function extractTitleWithSource(): { title: string; source: TitleSource } {
     return { title: docTitle, source: 'document' };
   }
 
-  // 3. Any h1/h2 anywhere in primaryColumn (last-resort, requires longer text)
+  // 2. h1/h2 inside the article element (only if document.title was unhelpful)
+  const articleEl = primary?.querySelector('article') as HTMLElement | null;
+  if (articleEl) {
+    const headings = Array.from(articleEl.querySelectorAll('h1, h2')) as HTMLElement[];
+    for (const h of headings) {
+      const text = h.textContent?.trim() ?? '';
+      if (text.length >= 10 && !isGenericTitle(text)) {
+        return { title: text, source: 'heading' };
+      }
+    }
+  }
+
+  // 3. Any h1/h2 in primaryColumn (last-resort, requires substantial text)
   if (primary) {
     const headings = Array.from(primary.querySelectorAll('h1, h2')) as HTMLElement[];
     for (const h of headings) {
@@ -337,16 +336,13 @@ function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set
       continue;
     }
 
-    // No semantic blocks anywhere inside — this is X's div-soup case. We
-    // need to figure out if this container is one paragraph or multiple.
+    // No semantic blocks anywhere inside — this is X's div-soup case.
     const innerText = (child.innerText ?? '').trim();
     if (!innerText || isNoiseText(innerText)) continue;
 
-    // Look at element children to decide.
     const elementChildren = Array.from(child.children) as HTMLElement[];
 
-    // If children are all inline tags (or there are no element children),
-    // this is a leaf paragraph — emit it with its rich text intact.
+    // 1. All inline children (or no element children) → leaf paragraph
     const onlyInlineChildren =
       elementChildren.length === 0 ||
       elementChildren.every(c => isInlineTag(c.tagName.toLowerCase()));
@@ -355,16 +351,23 @@ function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set
       continue;
     }
 
-    // Children are block-like (more divs / sections / etc.).
-    // Use the rendered innerText as the source of truth: if it contains
-    // newlines, the children are visually stacked (real paragraphs) and we
-    // need to recurse. If it's all on one line, it's an inline flow (flex
-    // row) and we should flatten.
-    if (innerText.includes('\n')) {
+    // 2. Multiple SUBSTANTIAL children (each >50 chars of text) → real
+    //    stacked paragraphs, recurse to extract each separately. This is
+    //    Article 2's body case (multiple long paragraphs).
+    const substantialChildren = elementChildren.filter(c => {
+      const t = (c.innerText ?? '').trim();
+      return t.length > 50;
+    });
+    if (substantialChildren.length >= 2) {
       walkStructured(child, blocks, seenImages);
-    } else {
-      emitParagraph(child, blocks);
+      continue;
     }
+
+    // 3. Otherwise: this is X's inline-fragment-with-divs pattern
+    //    ("I turned my" / "<a>@user</a>" / "into the most..." each in its
+    //    own div). Flatten as one paragraph — extractRichText preserves the
+    //    inline links.
+    emitParagraph(child, blocks);
   }
 }
 
@@ -496,8 +499,30 @@ function extractRichText(el: HTMLElement): RichTextSegment[] {
       }
     }
 
+    // Check if this is a block-level element (display:block / flex / etc).
+    // For block-level elements, we need to insert a separator AFTER walking
+    // so adjacent block siblings don't run together ("foo"+"bar" → "foo bar").
+    let isBlockLevel = false;
+    if (tag !== 'a' && tag !== 'span' && !INLINE_TAGS.has(tag)) {
+      try {
+        const display = window.getComputedStyle(e).display;
+        isBlockLevel = display === 'block' || display === 'flex' ||
+          display === 'grid' || display === 'list-item' || display === 'table';
+      } catch {}
+    }
+
+    const segmentsBefore = segments.length;
     for (const child of Array.from(e.childNodes)) {
       walk(child, newFmt);
+    }
+
+    // After a block element with content, append a space if the last
+    // segment doesn't already end with whitespace
+    if (isBlockLevel && segments.length > segmentsBefore) {
+      const last = segments[segments.length - 1];
+      if (last && last.text && !/\s$/.test(last.text)) {
+        segments.push({ text: ' ', ...fmt });
+      }
     }
   }
 
