@@ -4,12 +4,12 @@ export function extractArticle(): ArticleData {
   const url = window.location.href;
   const { displayName, handle } = extractAuthor();
   const publishedDate = extractDate();
-  const body = extractBody();
+  const rawBody = extractBody();
 
   // Title: use dedicated extraction, fall back to first body paragraph
   let title = extractTitle();
   if (isGenericTitle(title)) {
-    const firstText = body.find(b => b.type === 'paragraph');
+    const firstText = rawBody.find(b => b.type === 'paragraph');
     if (firstText?.type === 'paragraph') {
       const text = firstText.richText.map(s => s.text).join('');
       const firstLine = text.split('\n')[0].trim();
@@ -17,7 +17,55 @@ export function extractArticle(): ArticleData {
     }
   }
 
+  // Strip leading body blocks that just duplicate the title (X renders the
+  // title at the top of the article body — we already store it as page title)
+  const body = stripLeadingTitle(rawBody, title);
+
   return { title, author: { displayName, handle }, publishedDate, url, body };
+}
+
+function stripLeadingTitle(body: ArticleBlock[], title: string): ArticleBlock[] {
+  if (!title || body.length === 0) return body;
+
+  const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+  const normTitle = normalize(title);
+  if (!normTitle) return body;
+
+  // Try matching the title against an increasing number of leading blocks.
+  // Stop as soon as the combined leading text covers the title (or diverges).
+  for (let numBlocks = 1; numBlocks <= Math.min(5, body.length); numBlocks++) {
+    let combined = '';
+    let textOnly = true;
+
+    for (let i = 0; i < numBlocks; i++) {
+      const block = body[i];
+      if (block.type === 'paragraph') {
+        combined += ' ' + block.richText.map(s => s.text).join('');
+      } else if ('text' in block) {
+        combined += ' ' + block.text;
+      } else {
+        textOnly = false;
+        break;
+      }
+    }
+
+    if (!textOnly) break;
+
+    const normCombined = normalize(combined);
+
+    // Exact match — strip these blocks
+    if (normCombined === normTitle) {
+      return body.slice(numBlocks);
+    }
+    // Title + small trailing content (e.g., byline "(@handle)") — strip
+    if (normCombined.startsWith(normTitle) && normCombined.length <= normTitle.length + 60) {
+      return body.slice(numBlocks);
+    }
+    // We've overshot the title length without matching — stop trying
+    if (normCombined.length > normTitle.length + 60) break;
+  }
+
+  return body;
 }
 
 const GENERIC_TITLES = [
@@ -187,7 +235,15 @@ function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set
     );
 
     if (hasBlockChildren) {
-      walkStructured(child, blocks, seenImages);
+      // X often uses nested <div>s for inline layout (flex rows). If all the
+      // visible children of this container sit on the same horizontal line,
+      // treat the whole container as ONE inline flow (single paragraph) so we
+      // don't shred a sentence into one block per word/link.
+      if (shouldFlattenAsInline(child)) {
+        emitParagraph(child, blocks);
+      } else {
+        walkStructured(child, blocks, seenImages);
+      }
       continue;
     }
 
@@ -196,6 +252,38 @@ function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set
       emitParagraph(child, blocks);
     }
   }
+}
+
+function shouldFlattenAsInline(parent: HTMLElement): boolean {
+  const children = Array.from(parent.children) as HTMLElement[];
+  if (children.length < 2) return false;
+
+  // Skip if any child is a real block element (heading, list, image, etc.)
+  for (const child of children) {
+    const tag = child.tagName.toLowerCase();
+    if (
+      tag === 'h1' || tag === 'h2' || tag === 'h3' || tag === 'h4' || tag === 'h5' || tag === 'h6' ||
+      tag === 'ul' || tag === 'ol' || tag === 'blockquote' || tag === 'hr' ||
+      tag === 'figure' || tag === 'picture' || tag === 'img' || tag === 'p'
+    ) {
+      return false;
+    }
+  }
+
+  // Collect rendered top positions of visible children
+  const tops: number[] = [];
+  for (const child of children) {
+    const rect = child.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      tops.push(rect.top);
+    }
+  }
+  if (tops.length < 2) return false;
+
+  // All visible children on roughly the same horizontal line?
+  const minTop = Math.min(...tops);
+  const maxTop = Math.max(...tops);
+  return (maxTop - minTop) < 8;
 }
 
 function emitListItems(
