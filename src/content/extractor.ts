@@ -1,68 +1,81 @@
 import type { ArticleData, ArticleBlock, RichTextSegment } from '../types/article';
 
+type TitleSource = 'heading' | 'tweet' | 'document';
+
 export function extractArticle(): ArticleData {
   const url = window.location.href;
   const { displayName, handle } = extractAuthor();
   const publishedDate = extractDate();
   const rawBody = extractBody();
 
-  // Title: use dedicated extraction, fall back to first body paragraph
-  let title = extractTitle();
+  // Title extraction also tells us WHERE the title came from. This matters
+  // for the duplicate-title strip below.
+  const { title: extractedTitle, source: titleSource } = extractTitleWithSource();
+  let title = extractedTitle;
+  let titleFromBodyFallback = false;
+
   if (isGenericTitle(title)) {
     const firstText = rawBody.find(b => b.type === 'paragraph');
     if (firstText?.type === 'paragraph') {
       const text = firstText.richText.map(s => s.text).join('');
       const firstLine = text.split('\n')[0].trim();
       title = firstLine.length > 120 ? firstLine.slice(0, 120) + '...' : firstLine || 'Untitled';
+      titleFromBodyFallback = true;
     }
   }
 
-  // Strip leading body blocks that just duplicate the title (X renders the
-  // title at the top of the article body — we already store it as page title)
-  const body = stripLeadingTitle(rawBody, title);
+  // For long-form X Articles, the title is rendered as a heading at the very
+  // top of the article body. We already store it as the Notion page title,
+  // so drop it from the body to avoid the duplicate. We ONLY do this when:
+  //   1. The title was extracted from a real heading element (article case)
+  //   2. The title wasn't synthesized from the first body paragraph (tweet
+  //      fallback would mean we'd lose actual body content)
+  let body = rawBody;
+  if (!titleFromBodyFallback && titleSource === 'heading') {
+    body = stripDuplicateTitle(body, title);
+  }
 
   return { title, author: { displayName, handle }, publishedDate, url, body };
 }
 
-function stripLeadingTitle(body: ArticleBlock[], title: string): ArticleBlock[] {
+/**
+ * Drop the first body block that matches the title. We look at up to the
+ * first 3 blocks (in case there's a hero image or byline before the title).
+ * Match strategies (any one suffices):
+ *   - Exact normalized match
+ *   - First-block text contains the title (paragraph with extra trailing
+ *     content like "Title (@author)")
+ *   - Title contains the first-block text (truncated title case)
+ */
+function stripDuplicateTitle(body: ArticleBlock[], title: string): ArticleBlock[] {
   if (!title || body.length === 0) return body;
 
   const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
   const normTitle = normalize(title);
-  if (!normTitle) return body;
+  if (normTitle.length < 3) return body;
 
-  // Try matching the title against an increasing number of leading blocks.
-  // Stop as soon as the combined leading text covers the title (or diverges).
-  for (let numBlocks = 1; numBlocks <= Math.min(5, body.length); numBlocks++) {
-    let combined = '';
-    let textOnly = true;
-
-    for (let i = 0; i < numBlocks; i++) {
-      const block = body[i];
-      if (block.type === 'paragraph') {
-        combined += ' ' + block.richText.map(s => s.text).join('');
-      } else if ('text' in block) {
-        combined += ' ' + block.text;
-      } else {
-        textOnly = false;
-        break;
-      }
+  for (let i = 0; i < Math.min(3, body.length); i++) {
+    const block = body[i];
+    let text = '';
+    if (block.type === 'paragraph') {
+      text = block.richText.map(s => s.text).join('');
+    } else if ('text' in block) {
+      text = block.text;
+    } else {
+      continue;
     }
 
-    if (!textOnly) break;
+    const normText = normalize(text);
+    if (!normText) continue;
 
-    const normCombined = normalize(combined);
+    const exactMatch = normText === normTitle;
+    const blockHasTitlePrefix = normText.startsWith(normTitle) && normText.length <= normTitle.length + 100;
+    const titleHasBlockPrefix = normTitle.startsWith(normText) && normText.length >= Math.min(10, normTitle.length);
+    const blockContainsTitle = normText.includes(normTitle) && normText.length <= normTitle.length + 100;
 
-    // Exact match — strip these blocks
-    if (normCombined === normTitle) {
-      return body.slice(numBlocks);
+    if (exactMatch || blockHasTitlePrefix || titleHasBlockPrefix || blockContainsTitle) {
+      return [...body.slice(0, i), ...body.slice(i + 1)];
     }
-    // Title + small trailing content (e.g., byline "(@handle)") — strip
-    if (normCombined.startsWith(normTitle) && normCombined.length <= normTitle.length + 60) {
-      return body.slice(numBlocks);
-    }
-    // We've overshot the title length without matching — stop trying
-    if (normCombined.length > normTitle.length + 60) break;
   }
 
   return body;
@@ -114,12 +127,14 @@ function extractDate(): string {
 
 // --- Title ---
 
-function extractTitle(): string {
+function extractTitleWithSource(): { title: string; source: TitleSource } {
   const primary = document.querySelector('[data-testid="primaryColumn"]');
 
   if (primary) {
     const heading = primary.querySelector('h1') ?? primary.querySelector('h2');
-    if (heading?.textContent?.trim()) return heading.textContent.trim();
+    if (heading?.textContent?.trim()) {
+      return { title: heading.textContent.trim(), source: 'heading' };
+    }
   }
 
   if (primary) {
@@ -128,7 +143,8 @@ function extractTitle(): string {
       const text = tweetText.innerText?.trim() ?? '';
       const firstLine = text.split('\n')[0].trim();
       if (firstLine && !isGenericTitle(firstLine)) {
-        return firstLine.length > 120 ? firstLine.slice(0, 120) + '...' : firstLine;
+        const truncated = firstLine.length > 120 ? firstLine.slice(0, 120) + '...' : firstLine;
+        return { title: truncated, source: 'tweet' };
       }
     }
   }
@@ -137,7 +153,7 @@ function extractTitle(): string {
     .replace(/\s*[/|·]\s*X\s*$/i, '')
     .replace(/\s*on X:?\s*"?.*"?\s*$/i, '')
     .trim();
-  return docTitle || 'Untitled';
+  return { title: docTitle || 'Untitled', source: 'document' };
 }
 
 // --- Body extraction (structured, tag-aware) ---
