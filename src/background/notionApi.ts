@@ -234,14 +234,18 @@ function splitRichTextBlocks(
 }
 
 export async function createX2NotionDatabase(token: string): Promise<{ id: string }> {
+  // Search for any page the integration has access to
   const searchResult = await notionFetch('/search', 'POST', {
     filter: { value: 'page', property: 'object' },
     page_size: 1,
   }) as { results: Array<{ id: string }> };
 
-  const parent = searchResult.results.length > 0
-    ? { type: 'page_id' as const, page_id: searchResult.results[0].id }
-    : { type: 'workspace' as const, workspace: true };
+  // Notion API requires a parent page to create a database (workspace root not allowed)
+  if (searchResult.results.length === 0) {
+    throw new Error('NO_PAGES_SHARED');
+  }
+
+  const parent = { type: 'page_id' as const, page_id: searchResult.results[0].id };
 
   const result = await notionFetch('/databases', 'POST', {
     parent,
@@ -259,6 +263,23 @@ export async function createX2NotionDatabase(token: string): Promise<{ id: strin
   }) as { id: string };
 
   return { id: result.id };
+}
+
+export async function getAccessibleResourceCounts(): Promise<{ pages: number; databases: number }> {
+  const [pageResult, dbResult] = await Promise.all([
+    notionFetch('/search', 'POST', {
+      filter: { value: 'page', property: 'object' },
+      page_size: 1,
+    }) as Promise<{ results: unknown[] }>,
+    notionFetch('/search', 'POST', {
+      filter: { value: 'database', property: 'object' },
+      page_size: 1,
+    }) as Promise<{ results: unknown[] }>,
+  ]);
+  return {
+    pages: pageResult.results.length,
+    databases: dbResult.results.length,
+  };
 }
 
 export async function listDatabases(): Promise<Array<{ id: string; title: string }>> {

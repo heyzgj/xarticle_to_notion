@@ -1,6 +1,6 @@
 import type { Message } from '../types/messages';
 import { getSettings, isConfigured, saveSettings } from '../utils/storage';
-import { saveArticle, getCategories, createX2NotionDatabase, listDatabases } from './notionApi';
+import { saveArticle, getCategories, createX2NotionDatabase, listDatabases, getAccessibleResourceCounts } from './notionApi';
 import { getCachedCategories, invalidateCache } from './categoryCache';
 
 export async function handleMessage(message: Message): Promise<Message> {
@@ -72,6 +72,15 @@ export async function handleMessage(message: Message): Promise<Message> {
         workspaceName: settings!.workspaceName,
         databaseName: settings!.databaseName,
       };
+    }
+
+    case 'CHECK_ACCESS': {
+      try {
+        const counts = await getAccessibleResourceCounts();
+        return { type: 'CHECK_ACCESS_RESULT', pages: counts.pages, databases: counts.databases };
+      } catch {
+        return { type: 'CHECK_ACCESS_RESULT', pages: 0, databases: 0 };
+      }
     }
 
     default:

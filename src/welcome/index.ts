@@ -3,16 +3,32 @@ import type { Message } from '../types/messages';
 import { saveSettings, getSettings } from '../utils/storage';
 import { OAUTH_WORKER_URL } from '../utils/constants';
 
+// Step elements
 const stepConnect = document.getElementById('step-connect')!;
 const stepDatabase = document.getElementById('step-database')!;
 const stepDone = document.getElementById('step-done')!;
+
+// Connect step
 const btnConnect = document.getElementById('btn-connect')!;
+
+// Database step substates
+const dbChecking = document.getElementById('db-checking')!;
+const dbHasAccess = document.getElementById('db-has-access')!;
+const dbNoAccess = document.getElementById('db-no-access')!;
+const dbStepSubtitle = document.getElementById('db-step-subtitle')!;
+
+// Has-access elements
 const btnCreateDb = document.getElementById('btn-create-db')!;
 const btnExistingDb = document.getElementById('btn-existing-db')!;
 const dbPicker = document.getElementById('db-picker')!;
 const dbSelect = document.getElementById('db-select') as HTMLSelectElement;
 const btnUseSelected = document.getElementById('btn-use-selected')!;
 const dbLoading = document.getElementById('db-loading')!;
+
+// No-access recovery
+const btnReconnect = document.getElementById('btn-reconnect')!;
+
+// Done step
 const dbNameEl = document.getElementById('db-name')!;
 
 function showStep(step: HTMLElement) {
@@ -20,8 +36,57 @@ function showStep(step: HTMLElement) {
   step.hidden = false;
 }
 
+function showDbSubstate(state: 'checking' | 'hasAccess' | 'noAccess') {
+  dbChecking.hidden = state !== 'checking';
+  dbHasAccess.hidden = state !== 'hasAccess';
+  dbNoAccess.hidden = state !== 'noAccess';
+}
+
 async function sendMessage(msg: Message): Promise<Message> {
   return chrome.runtime.sendMessage(msg);
+}
+
+function startOAuth() {
+  const extensionId = chrome.runtime.id;
+  window.location.href = `${OAUTH_WORKER_URL}/auth?extension_id=${extensionId}`;
+}
+
+async function handlePostOAuth() {
+  // Show database step with checking state
+  showStep(stepDatabase);
+  showDbSubstate('checking');
+
+  // Check what we have access to
+  const accessResult = await sendMessage({ type: 'CHECK_ACCESS' });
+  if (accessResult.type !== 'CHECK_ACCESS_RESULT') {
+    showDbSubstate('noAccess');
+    return;
+  }
+
+  const { pages, databases } = accessResult;
+
+  if (pages === 0 && databases === 0) {
+    // Nothing shared — show recovery UI
+    showDbSubstate('noAccess');
+    return;
+  }
+
+  // We have access — show options
+  showDbSubstate('hasAccess');
+
+  // If they have existing databases, surface that option
+  if (databases > 0) {
+    btnExistingDb.hidden = false;
+  } else {
+    btnExistingDb.hidden = true;
+  }
+
+  // If they have no pages but have databases, hide "Create" and auto-show picker
+  if (pages === 0 && databases > 0) {
+    btnCreateDb.hidden = true;
+    dbStepSubtitle.textContent = 'Pick the database to save your articles to.';
+    await loadAndShowExistingPicker();
+  }
 }
 
 async function checkOAuthReturn() {
@@ -41,17 +106,19 @@ async function checkOAuthReturn() {
     });
 
     window.history.replaceState({}, '', window.location.pathname);
-    showStep(stepDatabase);
+    await handlePostOAuth();
     return true;
   }
   return false;
 }
 
-btnConnect.addEventListener('click', () => {
-  const extensionId = chrome.runtime.id;
-  window.location.href = `${OAUTH_WORKER_URL}/auth?extension_id=${extensionId}`;
-});
+// Connect button — start OAuth
+btnConnect.addEventListener('click', startOAuth);
 
+// Reconnect button (no-pages recovery) — restart OAuth
+btnReconnect.addEventListener('click', startOAuth);
+
+// Create X2Notion database
 btnCreateDb.addEventListener('click', async () => {
   dbLoading.hidden = false;
   btnCreateDb.setAttribute('disabled', '');
@@ -62,15 +129,27 @@ btnCreateDb.addEventListener('click', async () => {
   if (result.type === 'CREATE_DATABASE_RESULT' && result.success) {
     dbNameEl.textContent = 'X2Notion';
     showStep(stepDone);
+    return;
+  }
+
+  // Handle errors
+  dbLoading.hidden = true;
+  btnCreateDb.removeAttribute('disabled');
+  btnExistingDb.removeAttribute('disabled');
+
+  if (result.type === 'CREATE_DATABASE_RESULT' && result.error === 'NO_PAGES_SHARED') {
+    // Switch to recovery UI
+    showDbSubstate('noAccess');
   } else {
-    dbLoading.hidden = true;
-    btnCreateDb.removeAttribute('disabled');
-    btnExistingDb.removeAttribute('disabled');
-    alert('Could not create database. Please try again.');
+    const errMsg = (result.type === 'CREATE_DATABASE_RESULT' && result.error)
+      ? result.error
+      : 'Unknown error';
+    alert(`Could not create database: ${errMsg}\n\nTry the "Use an existing database" option instead.`);
   }
 });
 
-btnExistingDb.addEventListener('click', async () => {
+// Show existing database picker
+async function loadAndShowExistingPicker() {
   dbPicker.hidden = false;
   btnExistingDb.classList.add('db-option--recommended');
   btnCreateDb.classList.remove('db-option--recommended');
@@ -85,7 +164,9 @@ btnExistingDb.addEventListener('click', async () => {
       dbSelect.appendChild(option);
     }
   }
-});
+}
+
+btnExistingDb.addEventListener('click', loadAndShowExistingPicker);
 
 dbSelect.addEventListener('change', () => {
   btnUseSelected.toggleAttribute('disabled', !dbSelect.value);
@@ -107,6 +188,7 @@ btnUseSelected.addEventListener('click', async () => {
   showStep(stepDone);
 });
 
+// Init
 checkOAuthReturn().then(returned => {
   if (!returned) {
     getSettings().then(settings => {

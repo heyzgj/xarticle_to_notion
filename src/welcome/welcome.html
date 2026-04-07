@@ -41,8 +41,18 @@
         </div>
       </div>
 
+      <div class="tip-box">
+        <div class="tip-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="tip-content">
+          <div class="tip-title">Heads up — Notion will ask which pages to share</div>
+          <div class="tip-desc">On the next screen, click <strong>Select pages</strong> and pick at least one page. We'll create a database inside it. Don't have a page yet? <a href="https://www.notion.so/" target="_blank">Create one in Notion</a> first.</div>
+        </div>
+      </div>
+
       <button id="btn-connect" class="btn btn-primary btn-large btn-full">
-        Connect to Notion
+        Continue to Notion
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
 
@@ -59,32 +69,62 @@
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path class="check-path" d="M10 16l4 4 8-8" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <h1>Connected!</h1>
-        <p class="subtitle">Where should we save your articles?</p>
+        <p id="db-step-subtitle" class="subtitle">Where should we save your articles?</p>
       </div>
 
-      <div class="db-options">
-        <button id="btn-create-db" class="db-option db-option--recommended">
-          <div class="db-option-badge">Recommended</div>
-          <div class="db-option-title">Create "X2Notion" for me</div>
-          <div class="db-option-desc">We'll set up a ready-to-go database in your Notion workspace.</div>
-        </button>
-
-        <button id="btn-existing-db" class="db-option">
-          <div class="db-option-title">Use an existing database</div>
-          <div class="db-option-desc">Pick one you've already set up.</div>
-        </button>
+      <!-- Substate: Loading initial check -->
+      <div id="db-checking" class="db-substate">
+        <div class="spinner spinner--dark" style="width: 24px; height: 24px; border-width: 3px; margin: 32px auto;"></div>
+        <p class="text-center text-muted">Checking your workspace...</p>
       </div>
 
-      <div id="db-picker" hidden>
-        <select id="db-select" class="input">
-          <option value="">Select a database...</option>
-        </select>
-        <button id="btn-use-selected" class="btn btn-primary btn-full" style="margin-top: 12px" disabled>Use this database</button>
+      <!-- Substate: Has access — show options -->
+      <div id="db-has-access" class="db-substate" hidden>
+        <div class="db-options">
+          <button id="btn-create-db" class="db-option db-option--recommended">
+            <div class="db-option-badge">Recommended</div>
+            <div class="db-option-title">Create "X2Notion" for me</div>
+            <div class="db-option-desc">We'll set up a ready-to-go database inside one of your Notion pages.</div>
+          </button>
+
+          <button id="btn-existing-db" class="db-option" hidden>
+            <div class="db-option-title">Use an existing database</div>
+            <div class="db-option-desc">Pick one you've already set up.</div>
+          </button>
+        </div>
+
+        <div id="db-picker" hidden>
+          <label class="picker-label">Choose a database</label>
+          <select id="db-select" class="input picker-select">
+            <option value="">Select a database...</option>
+          </select>
+          <button id="btn-use-selected" class="btn btn-primary btn-full" style="margin-top: 12px" disabled>Use this database</button>
+        </div>
+
+        <div id="db-loading" hidden>
+          <div class="spinner spinner--dark" style="width: 24px; height: 24px; border-width: 3px; margin: 20px auto;"></div>
+          <p class="text-center text-muted">Setting up your database...</p>
+        </div>
       </div>
 
-      <div id="db-loading" hidden>
-        <div class="spinner spinner--dark" style="width: 24px; height: 24px; border-width: 3px; margin: 20px auto;"></div>
-        <p class="text-center text-muted">Setting up your database...</p>
+      <!-- Substate: No pages shared — recovery -->
+      <div id="db-no-access" class="db-substate" hidden>
+        <div class="error-card">
+          <div class="error-icon-circle">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/></svg>
+          </div>
+          <h3 class="error-title">No pages shared yet</h3>
+          <p class="error-desc">It looks like you didn't pick any pages on Notion's permission screen. We need at least one page to save your articles into.</p>
+
+          <div class="error-steps">
+            <div class="error-step"><span class="error-step-num">1</span> Click <strong>Try again</strong> below</div>
+            <div class="error-step"><span class="error-step-num">2</span> On Notion's screen, click <strong>Select pages</strong></div>
+            <div class="error-step"><span class="error-step-num">3</span> Pick any page (or <a href="https://www.notion.so/" target="_blank">create a new one</a>)</div>
+            <div class="error-step"><span class="error-step-num">4</span> Click <strong>Allow access</strong></div>
+          </div>
+
+          <button id="btn-reconnect" class="btn btn-primary btn-full" style="margin-top: 16px">Try again</button>
+        </div>
       </div>
     </div>
 

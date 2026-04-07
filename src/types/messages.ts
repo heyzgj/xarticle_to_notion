@@ -17,4 +17,6 @@ export type Message =
   | { type: 'LIST_DATABASES' }
   | { type: 'LIST_DATABASES_RESULT'; databases: Array<{ id: string; title: string }> }
   | { type: 'GET_CONNECTION_STATUS' }
-  | { type: 'CONNECTION_STATUS'; connected: boolean; workspaceName?: string; databaseName?: string };
+  | { type: 'CONNECTION_STATUS'; connected: boolean; workspaceName?: string; databaseName?: string }
+  | { type: 'CHECK_ACCESS' }
+  | { type: 'CHECK_ACCESS_RESULT'; pages: number; databases: number };
