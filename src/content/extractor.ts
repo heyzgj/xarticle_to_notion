@@ -24,34 +24,60 @@ export function extractArticle(): ArticleData {
     }
   }
 
-  // For long-form X Articles, the title is rendered as a heading at the very
-  // top of the article body. We already store it as the Notion page title,
-  // so drop it from the body to avoid the duplicate. We ONLY do this when:
-  //   1. The title was extracted from a real heading element (article case)
-  //   2. The title wasn't synthesized from the first body paragraph (tweet
-  //      fallback would mean we'd lose actual body content)
+  // The detector only triggers on long-form X Articles (regular tweets are
+  // rejected), so we can always try to strip the duplicate title from the
+  // body — UNLESS we synthesized the title from a body paragraph as a
+  // fallback (in which case stripping it would lose real content).
   let body = rawBody;
-  if (!titleFromBodyFallback && titleSource === 'heading') {
+  if (!titleFromBodyFallback) {
     body = stripDuplicateTitle(body, title);
   }
+
+  // Suppress the unused-warning while keeping the source for future use
+  void titleSource;
 
   return { title, author: { displayName, handle }, publishedDate, url, body };
 }
 
 /**
- * Drop the first body block that matches the title. We look at up to the
+ * Normalize text for fuzzy comparison: lowercase, collapse whitespace,
+ * fold smart quotes/apostrophes/dashes to ASCII, drop zero-width chars,
+ * and strip punctuation. This is intentionally lossy — we just want to
+ * know if two strings represent the SAME human-readable phrase.
+ */
+function normalizeForMatch(s: string): string {
+  return s
+    .toLowerCase()
+    // Smart quotes / apostrophes → ASCII
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    // Various dashes → hyphen
+    .replace(/[\u2013\u2014\u2015]/g, '-')
+    // Ellipsis → three dots
+    .replace(/\u2026/g, '...')
+    // Zero-width / BOM characters
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    // Drop all punctuation for comparison
+    .replace(/[^\p{L}\p{N}\s]/gu, '')
+    // Collapse whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Drop the first body block that matches the title. Looks at up to the
  * first 3 blocks (in case there's a hero image or byline before the title).
- * Match strategies (any one suffices):
- *   - Exact normalized match
- *   - First-block text contains the title (paragraph with extra trailing
- *     content like "Title (@author)")
- *   - Title contains the first-block text (truncated title case)
+ * Multiple match strategies, any one suffices:
+ *   - Normalized exact match
+ *   - Block text contains the title (paragraph with trailing content like
+ *     "Title (@author)")
+ *   - Title contains the block text (truncated title)
+ *   - First 25 characters match (resilient to trailing differences)
  */
 function stripDuplicateTitle(body: ArticleBlock[], title: string): ArticleBlock[] {
   if (!title || body.length === 0) return body;
 
-  const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
-  const normTitle = normalize(title);
+  const normTitle = normalizeForMatch(title);
   if (normTitle.length < 3) return body;
 
   for (let i = 0; i < Math.min(3, body.length); i++) {
@@ -65,15 +91,20 @@ function stripDuplicateTitle(body: ArticleBlock[], title: string): ArticleBlock[
       continue;
     }
 
-    const normText = normalize(text);
+    const normText = normalizeForMatch(text);
     if (!normText) continue;
 
     const exactMatch = normText === normTitle;
-    const blockHasTitlePrefix = normText.startsWith(normTitle) && normText.length <= normTitle.length + 100;
-    const titleHasBlockPrefix = normTitle.startsWith(normText) && normText.length >= Math.min(10, normTitle.length);
-    const blockContainsTitle = normText.includes(normTitle) && normText.length <= normTitle.length + 100;
+    const blockContainsTitle = normText.includes(normTitle) && normText.length <= normTitle.length + 120;
+    const titleContainsBlock = normTitle.includes(normText) && normText.length >= Math.min(10, normTitle.length);
 
-    if (exactMatch || blockHasTitlePrefix || titleHasBlockPrefix || blockContainsTitle) {
+    // First-N-chars match: catches cases where the title and the body block
+    // start with the same phrase but diverge later (different bylines,
+    // metadata, etc.). Requires at least 25 chars of agreement.
+    const matchLen = Math.min(25, normTitle.length, normText.length);
+    const firstNMatch = matchLen >= 25 && normText.slice(0, matchLen) === normTitle.slice(0, matchLen);
+
+    if (exactMatch || blockContainsTitle || titleContainsBlock || firstNMatch) {
       return [...body.slice(0, i), ...body.slice(i + 1)];
     }
   }
