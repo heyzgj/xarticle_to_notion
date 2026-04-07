@@ -46,7 +46,12 @@ export async function handleMessage(message: Message): Promise<Message> {
           databaseId: db.id,
           databaseName: 'X2Notion',
         });
-        return { type: 'CREATE_DATABASE_RESULT', success: true, databaseId: db.id };
+        return {
+          type: 'CREATE_DATABASE_RESULT',
+          success: true,
+          databaseId: db.id,
+          parentPageName: db.parentPageName,
+        };
       } catch (e) {
         return { type: 'CREATE_DATABASE_RESULT', success: false, error: (e as Error).message };
       }

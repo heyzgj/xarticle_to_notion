@@ -79,8 +79,12 @@ export async function saveArticle(
     Handle: { rich_text: [{ type: 'text', text: { content: article.author.handle } }] },
     Published: { date: { start: article.publishedDate.split('T')[0] } },
     Saved: { date: { start: new Date().toISOString().split('T')[0] } },
-    Category: { select: { name: category } },
   };
+
+  // Only include Category if user picked one (Notion rejects empty select.name)
+  if (category && category.trim()) {
+    properties['Category'] = { select: { name: category.trim() } };
+  }
 
   if (tags.length > 0) {
     properties['Tags'] = { multi_select: tags.map(t => ({ name: t })) };
@@ -233,19 +237,26 @@ function splitRichTextBlocks(
   return blocks;
 }
 
-export async function createX2NotionDatabase(token: string): Promise<{ id: string }> {
+export async function createX2NotionDatabase(token: string): Promise<{ id: string; parentPageName: string }> {
   // Search for any page the integration has access to
   const searchResult = await notionFetch('/search', 'POST', {
     filter: { value: 'page', property: 'object' },
     page_size: 1,
-  }) as { results: Array<{ id: string }> };
+  }) as {
+    results: Array<{
+      id: string;
+      properties?: Record<string, { title?: Array<{ plain_text: string }> }>;
+    }>
+  };
 
   // Notion API requires a parent page to create a database (workspace root not allowed)
   if (searchResult.results.length === 0) {
     throw new Error('NO_PAGES_SHARED');
   }
 
-  const parent = { type: 'page_id' as const, page_id: searchResult.results[0].id };
+  const parentPage = searchResult.results[0];
+  const parentPageName = extractPageTitle(parentPage) || 'your Notion workspace';
+  const parent = { type: 'page_id' as const, page_id: parentPage.id };
 
   const result = await notionFetch('/databases', 'POST', {
     parent,
@@ -262,7 +273,20 @@ export async function createX2NotionDatabase(token: string): Promise<{ id: strin
     },
   }) as { id: string };
 
-  return { id: result.id };
+  return { id: result.id, parentPageName };
+}
+
+function extractPageTitle(page: {
+  properties?: Record<string, { title?: Array<{ plain_text: string }> }>;
+}): string {
+  if (!page.properties) return '';
+  for (const prop of Object.values(page.properties)) {
+    if (prop.title && Array.isArray(prop.title)) {
+      const text = prop.title.map(t => t.plain_text || '').join('').trim();
+      if (text) return text;
+    }
+  }
+  return '';
 }
 
 export async function getAccessibleResourceCounts(): Promise<{ pages: number; databases: number }> {

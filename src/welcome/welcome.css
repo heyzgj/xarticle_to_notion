@@ -348,5 +348,16 @@ body {
   line-height: 1.6;
 }
 
+.next-step strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.close-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
+
 .text-center { text-align: center; }
 .text-muted { color: var(--text-muted); font-size: 13px; }

@@ -30,6 +30,8 @@ const btnReconnect = document.getElementById('btn-reconnect')!;
 
 // Done step
 const dbNameEl = document.getElementById('db-name')!;
+const dbLocationEl = document.getElementById('db-location')!;
+const btnClose = document.getElementById('btn-close')!;
 
 function showStep(step: HTMLElement) {
   [stepConnect, stepDatabase, stepDone].forEach(s => s.hidden = true);
@@ -65,28 +67,70 @@ async function handlePostOAuth() {
 
   const { pages, databases } = accessResult;
 
+  // Case 1: Nothing shared — show recovery UI
   if (pages === 0 && databases === 0) {
-    // Nothing shared — show recovery UI
     showDbSubstate('noAccess');
     return;
   }
 
-  // We have access — show options
-  showDbSubstate('hasAccess');
-
-  // If they have existing databases, surface that option
-  if (databases > 0) {
-    btnExistingDb.hidden = false;
-  } else {
+  // Case 2: Pages but no databases — auto-create silently (no choice needed)
+  if (pages > 0 && databases === 0) {
+    dbStepSubtitle.textContent = 'Setting up your database...';
+    showDbSubstate('hasAccess');
+    btnCreateDb.hidden = true;
     btnExistingDb.hidden = true;
+    dbLoading.hidden = false;
+    await runCreateDatabase();
+    return;
   }
 
-  // If they have no pages but have databases, hide "Create" and auto-show picker
+  // Case 3: Has databases but no pages — auto-show picker (no "create" option)
   if (pages === 0 && databases > 0) {
+    showDbSubstate('hasAccess');
     btnCreateDb.hidden = true;
+    btnExistingDb.hidden = true;
     dbStepSubtitle.textContent = 'Pick the database to save your articles to.';
     await loadAndShowExistingPicker();
+    return;
   }
+
+  // Case 4: Has both pages AND databases — let user choose
+  showDbSubstate('hasAccess');
+  btnCreateDb.hidden = false;
+  btnExistingDb.hidden = false;
+}
+
+async function runCreateDatabase() {
+  const result = await sendMessage({ type: 'CREATE_DATABASE' });
+
+  if (result.type === 'CREATE_DATABASE_RESULT' && result.success) {
+    showDoneStep('X2Notion', result.parentPageName);
+    return;
+  }
+
+  // Handle errors
+  dbLoading.hidden = true;
+  btnCreateDb.removeAttribute('disabled');
+  btnExistingDb.removeAttribute('disabled');
+
+  if (result.type === 'CREATE_DATABASE_RESULT' && result.error === 'NO_PAGES_SHARED') {
+    showDbSubstate('noAccess');
+  } else {
+    const errMsg = (result.type === 'CREATE_DATABASE_RESULT' && result.error)
+      ? result.error
+      : 'Unknown error';
+    alert(`Could not create database: ${errMsg}`);
+  }
+}
+
+function showDoneStep(databaseName: string, parentPageName?: string) {
+  dbNameEl.textContent = databaseName;
+  if (parentPageName) {
+    dbLocationEl.textContent = ` inside your "${parentPageName}" page`;
+  } else {
+    dbLocationEl.textContent = '';
+  }
+  showStep(stepDone);
 }
 
 async function checkOAuthReturn() {
@@ -118,34 +162,12 @@ btnConnect.addEventListener('click', startOAuth);
 // Reconnect button (no-pages recovery) — restart OAuth
 btnReconnect.addEventListener('click', startOAuth);
 
-// Create X2Notion database
+// Create X2Notion database (manual click — when user has both pages and databases)
 btnCreateDb.addEventListener('click', async () => {
   dbLoading.hidden = false;
   btnCreateDb.setAttribute('disabled', '');
   btnExistingDb.setAttribute('disabled', '');
-
-  const result = await sendMessage({ type: 'CREATE_DATABASE' });
-
-  if (result.type === 'CREATE_DATABASE_RESULT' && result.success) {
-    dbNameEl.textContent = 'X2Notion';
-    showStep(stepDone);
-    return;
-  }
-
-  // Handle errors
-  dbLoading.hidden = true;
-  btnCreateDb.removeAttribute('disabled');
-  btnExistingDb.removeAttribute('disabled');
-
-  if (result.type === 'CREATE_DATABASE_RESULT' && result.error === 'NO_PAGES_SHARED') {
-    // Switch to recovery UI
-    showDbSubstate('noAccess');
-  } else {
-    const errMsg = (result.type === 'CREATE_DATABASE_RESULT' && result.error)
-      ? result.error
-      : 'Unknown error';
-    alert(`Could not create database: ${errMsg}\n\nTry the "Use an existing database" option instead.`);
-  }
+  await runCreateDatabase();
 });
 
 // Show existing database picker
@@ -184,8 +206,12 @@ btnUseSelected.addEventListener('click', async () => {
     databaseName: dbName,
   });
 
-  dbNameEl.textContent = dbName;
-  showStep(stepDone);
+  showDoneStep(dbName);
+});
+
+// Close tab button
+btnClose.addEventListener('click', () => {
+  window.close();
 });
 
 // Init
@@ -193,8 +219,7 @@ checkOAuthReturn().then(returned => {
   if (!returned) {
     getSettings().then(settings => {
       if (settings?.notionApiToken && settings?.databaseId) {
-        dbNameEl.textContent = settings.databaseName ?? 'X2Notion';
-        showStep(stepDone);
+        showDoneStep(settings.databaseName ?? 'X2Notion');
       }
     });
   }

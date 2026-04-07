@@ -13,7 +13,7 @@ export type Message =
   | { type: 'CHECK_CONFIGURED' }
   | { type: 'CONFIGURED_RESULT'; configured: boolean }
   | { type: 'CREATE_DATABASE' }
-  | { type: 'CREATE_DATABASE_RESULT'; success: boolean; databaseId?: string; error?: string }
+  | { type: 'CREATE_DATABASE_RESULT'; success: boolean; databaseId?: string; parentPageName?: string; error?: string }
   | { type: 'LIST_DATABASES' }
   | { type: 'LIST_DATABASES_RESULT'; databases: Array<{ id: string; title: string }> }
   | { type: 'GET_CONNECTION_STATUS' }
