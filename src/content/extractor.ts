@@ -135,6 +135,7 @@ function stripDuplicateTitle(body: ArticleBlock[], title: string): ArticleBlock[
 const GENERIC_TITLES = [
   'untitled', 'conversation', 'post', 'x', 'twitter',
   'home', 'notifications', 'messages', 'explore',
+  'article', 'articles', 'tweet', 'thread', 'profile',
 ];
 
 function isGenericTitle(title: string): boolean {
@@ -179,19 +180,48 @@ function extractDate(): string {
 // --- Title ---
 
 function extractTitleWithSource(): { title: string; source: TitleSource } {
-  const primary = document.querySelector('[data-testid="primaryColumn"]');
+  const primary = document.querySelector('[data-testid="primaryColumn"]') as HTMLElement | null;
+  const articleEl = primary?.querySelector('article') as HTMLElement | null;
 
-  if (primary) {
-    // Prefer headings with substantial text — skips tiny labels like "X"
-    const headings = Array.from(primary.querySelectorAll('h1, h2')) as HTMLElement[];
+  // 1. Look for substantial headings INSIDE the <article> element. The
+  //    article's own h1/h2 is the actual title, not random h1s in primary
+  //    column UI chrome (X uses h1 for things like "Article" labels).
+  if (articleEl) {
+    const headings = Array.from(articleEl.querySelectorAll('h1, h2')) as HTMLElement[];
     for (const h of headings) {
       const text = h.textContent?.trim() ?? '';
-      if (text.length >= 5 && !isGenericTitle(text)) {
+      if (text.length >= 10 && !isGenericTitle(text)) {
         return { title: text, source: 'heading' };
       }
     }
   }
 
+  // 2. document.title — X usually puts the article title here for shareable
+  //    article URLs.
+  let docTitle = document.title;
+  const onXMatch = docTitle.match(/^.+?\son X:?\s*["\u201C']?(.+?)["\u201D']?\s*(?:[\/|·]\s*X)?\s*$/i);
+  if (onXMatch && onXMatch[1]) {
+    docTitle = onXMatch[1];
+  } else {
+    docTitle = docTitle.replace(/\s*[/|·]\s*X\s*$/i, '');
+  }
+  docTitle = docTitle.trim();
+  if (docTitle && docTitle.length >= 5 && !isGenericTitle(docTitle)) {
+    return { title: docTitle, source: 'document' };
+  }
+
+  // 3. Any h1/h2 anywhere in primaryColumn (last-resort, requires longer text)
+  if (primary) {
+    const headings = Array.from(primary.querySelectorAll('h1, h2')) as HTMLElement[];
+    for (const h of headings) {
+      const text = h.textContent?.trim() ?? '';
+      if (text.length >= 15 && !isGenericTitle(text)) {
+        return { title: text, source: 'heading' };
+      }
+    }
+  }
+
+  // 4. tweetText fallback
   if (primary) {
     const tweetText = primary.querySelector('[data-testid="tweetText"]') as HTMLElement | null;
     if (tweetText) {
@@ -204,21 +234,7 @@ function extractTitleWithSource(): { title: string; source: TitleSource } {
     }
   }
 
-  // document.title cleanup. X uses several formats:
-  //   "Article Title / X"
-  //   "Article Title - X"
-  //   "Author Name on X: \"Article body excerpt\" / X"
-  let docTitle = document.title;
-  // For "Author on X: 'body' / X" patterns, extract the body (the actual content)
-  const onXMatch = docTitle.match(/^.+?\son X:?\s*["“']?(.+?)["”']?\s*(?:[\/|·]\s*X)?\s*$/i);
-  if (onXMatch && onXMatch[1]) {
-    docTitle = onXMatch[1];
-  } else {
-    // Just strip the trailing " / X" or " · X"
-    docTitle = docTitle.replace(/\s*[/|·]\s*X\s*$/i, '');
-  }
-  docTitle = docTitle.trim();
-  return { title: docTitle || 'Untitled', source: 'document' };
+  return { title: 'Untitled', source: 'document' };
 }
 
 // --- Body extraction (structured, tag-aware) ---
@@ -310,10 +326,9 @@ function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set
     }
 
     // Container (div / span / section / article / etc.)
-
-    // If this container has any real block elements (headings, lists,
-    // quotes, dividers, paragraphs) or images anywhere in its subtree,
-    // we MUST recurse so those don't get swallowed into a paragraph.
+    //
+    // If the subtree contains REAL semantic block elements or images, recurse
+    // so we handle them by their tag handlers above.
     const hasRealBlockOrImage = !!child.querySelector(
       'h1, h2, h3, h4, h5, h6, ul, ol, blockquote, hr, figure, picture, img, p'
     );
@@ -322,22 +337,30 @@ function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set
       continue;
     }
 
-    // Pure inline content (text + spans + anchors + nested divs with no
-    // real block elements). Decide: one paragraph or multiple stacked ones?
+    // No semantic blocks anywhere inside — this is X's div-soup case. We
+    // need to figure out if this container is one paragraph or multiple.
     const innerText = (child.innerText ?? '').trim();
     if (!innerText || isNoiseText(innerText)) continue;
 
-    const subChildren = Array.from(child.children) as HTMLElement[];
-    if (subChildren.length === 0) {
-      // Just text — emit as one paragraph
+    // Look at element children to decide.
+    const elementChildren = Array.from(child.children) as HTMLElement[];
+
+    // If children are all inline tags (or there are no element children),
+    // this is a leaf paragraph — emit it with its rich text intact.
+    const onlyInlineChildren =
+      elementChildren.length === 0 ||
+      elementChildren.every(c => isInlineTag(c.tagName.toLowerCase()));
+    if (onlyInlineChildren) {
       emitParagraph(child, blocks);
       continue;
     }
 
-    // Multiple element children: check if they're visually stacked or inline.
-    // X uses nested <div>s for both vertical layouts AND flex-row layouts;
-    // tag names alone can't tell us which. Use rendered geometry instead.
-    if (areChildrenVerticallyStacked(subChildren)) {
+    // Children are block-like (more divs / sections / etc.).
+    // Use the rendered innerText as the source of truth: if it contains
+    // newlines, the children are visually stacked (real paragraphs) and we
+    // need to recurse. If it's all on one line, it's an inline flow (flex
+    // row) and we should flatten.
+    if (innerText.includes('\n')) {
       walkStructured(child, blocks, seenImages);
     } else {
       emitParagraph(child, blocks);
@@ -345,32 +368,13 @@ function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set
   }
 }
 
-/**
- * Returns true if any two element children are on different visual lines.
- * Uses vertical-range overlap rather than top-equality so it's robust to
- * per-child padding/margin differences. Falls back to "not stacked" when
- * geometry is unavailable (so callers default to flattening — safer for
- * inline content like "(@user)" that we don't want to shred).
- */
-function areChildrenVerticallyStacked(els: HTMLElement[]): boolean {
-  const rects: DOMRect[] = [];
-  for (const el of els) {
-    const r = el.getBoundingClientRect();
-    if (r.width > 0 && r.height > 0) rects.push(r);
-  }
-  if (rects.length < 2) return false;
+const INLINE_TAGS = new Set([
+  'span', 'a', 'b', 'strong', 'i', 'em', 'u', 'small',
+  'sub', 'sup', 'mark', 'code', 'br', 'time', 'abbr',
+]);
 
-  // Sort by top so we can compare consecutive rects
-  rects.sort((a, b) => a.top - b.top);
-
-  // If any consecutive pair doesn't overlap vertically, they're stacked
-  for (let i = 1; i < rects.length; i++) {
-    const prev = rects[i - 1];
-    const curr = rects[i];
-    // 2px tolerance for sub-pixel rounding
-    if (prev.bottom < curr.top - 2) return true;
-  }
-  return false;
+function isInlineTag(tag: string): boolean {
+  return INLINE_TAGS.has(tag);
 }
 
 function emitListItems(
@@ -397,24 +401,54 @@ function emitParagraph(el: HTMLElement, blocks: ArticleBlock[]): void {
   const plainText = richText.map(s => s.text).join('').trim();
   if (!plainText || isNoiseText(plainText)) return;
 
-  // Split paragraph by double-newline (in case innerText has multiple paragraphs)
-  // Most of the time it's one paragraph
+  // Common case: short, single paragraph — emit with rich text intact
   if (plainText.length <= 2000 && !plainText.includes('\n\n')) {
     blocks.push({ type: 'paragraph', richText });
     return;
   }
 
-  // Long paragraph or contains multiple — split safely
+  // Multi-paragraph (separated by blank lines): split and emit each
   const text = plainText.replace(/\n{3,}/g, '\n\n');
   const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
   for (const para of paragraphs) {
-    for (let i = 0; i < para.length; i += 2000) {
-      blocks.push({
-        type: 'paragraph',
-        richText: [{ text: para.slice(i, i + 2000) }],
-      });
+    if (para.length <= 2000) {
+      blocks.push({ type: 'paragraph', richText: [{ text: para }] });
+      continue;
+    }
+    // Long paragraph: split at sentence/word boundaries (never mid-word)
+    for (const chunk of chunkText(para, 2000)) {
+      blocks.push({ type: 'paragraph', richText: [{ text: chunk }] });
     }
   }
+}
+
+/** Split a long string into chunks of at most `maxLen` chars without
+ *  cutting mid-word. Prefers sentence breaks, falls back to whitespace. */
+function chunkText(text: string, maxLen: number): string[] {
+  const chunks: string[] = [];
+  let remaining = text;
+  while (remaining.length > maxLen) {
+    let cutAt = -1;
+    // Prefer the last sentence boundary (., !, ?) before maxLen
+    const slice = remaining.slice(0, maxLen);
+    const sentenceEnd = Math.max(
+      slice.lastIndexOf('. '),
+      slice.lastIndexOf('! '),
+      slice.lastIndexOf('? '),
+      slice.lastIndexOf('.\n'),
+    );
+    if (sentenceEnd >= maxLen / 2) {
+      cutAt = sentenceEnd + 1;
+    } else {
+      // Fall back to last whitespace
+      const ws = slice.lastIndexOf(' ');
+      cutAt = ws >= maxLen / 2 ? ws : maxLen;
+    }
+    chunks.push(remaining.slice(0, cutAt).trim());
+    remaining = remaining.slice(cutAt).trim();
+  }
+  if (remaining) chunks.push(remaining);
+  return chunks;
 }
 
 // --- Rich text extraction (preserves links, bold, italic, underline) ---
