@@ -351,23 +351,18 @@ function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set
       continue;
     }
 
-    // 2. Multiple SUBSTANTIAL children (each >50 chars of text) → real
-    //    stacked paragraphs, recurse to extract each separately. This is
-    //    Article 2's body case (multiple long paragraphs).
-    const substantialChildren = elementChildren.filter(c => {
-      const t = (c.innerText ?? '').trim();
-      return t.length > 50;
-    });
-    if (substantialChildren.length >= 2) {
+    // 2. Use total inner-text length as the recurse-vs-flatten heuristic.
+    //    - Short total content (<500 chars) → almost certainly a single
+    //      logical paragraph rendered as div soup with inline fragments
+    //      (X uses display:block divs for sentence parts in some articles).
+    //      Flatten so we don't shred a sentence.
+    //    - Long total content (>=500 chars) → this is a real container
+    //      wrapping multiple paragraphs. Recurse so each becomes a block.
+    if (innerText.length >= 500) {
       walkStructured(child, blocks, seenImages);
-      continue;
+    } else {
+      emitParagraph(child, blocks);
     }
-
-    // 3. Otherwise: this is X's inline-fragment-with-divs pattern
-    //    ("I turned my" / "<a>@user</a>" / "into the most..." each in its
-    //    own div). Flatten as one paragraph — extractRichText preserves the
-    //    inline links.
-    emitParagraph(child, blocks);
   }
 }
 
@@ -674,6 +669,10 @@ const NOISE_PATTERNS = [
   /^\w{3}\s+\d{1,2},\s*\d{4}$/,
   /^\d{1,2}\s+\w{3}\s+\d{4}$/,
   /^\d+[KMB]?\s*Views?$/i,
+  // Bare engagement-count numbers ("78", "1.7K", "1,234")
+  /^[\d,]+(\.\d+)?[KMB]?$/i,
+  // Multiple bare numbers separated by spaces ("78 402 1.7K 736K")
+  /^[\d,]+(\.\d+)?[KMB]?(\s+[\d,]+(\.\d+)?[KMB]?){1,5}$/i,
 ];
 
 function isNoiseText(text: string): boolean {
