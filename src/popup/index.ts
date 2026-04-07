@@ -29,7 +29,9 @@ const actionArea = document.getElementById('action-area')!;
 const btnSave = document.getElementById('btn-save')!;
 const inlineError = document.getElementById('inline-error')!;
 const errorMessage = document.getElementById('error-message')!;
-const linkNotion = document.getElementById('link-notion') as HTMLAnchorElement;
+
+let saveState: 'idle' | 'saving' | 'saved' = 'idle';
+let savedPageUrl: string | null = null;
 
 const btnSettings = document.getElementById('btn-settings')!;
 const btnConnect = document.getElementById('btn-connect');
@@ -155,6 +157,13 @@ function setFormDisabled(disabled: boolean) {
 }
 
 btnSave.addEventListener('click', async () => {
+  // If already saved, clicking opens the Notion page
+  if (saveState === 'saved' && savedPageUrl) {
+    chrome.tabs.create({ url: savedPageUrl });
+    window.close();
+    return;
+  }
+  if (saveState === 'saving') return;
   if (!currentArticle) return;
 
   const category = categorySelect.value === '__new__' ? '' : categorySelect.value;
@@ -164,8 +173,8 @@ btnSave.addEventListener('click', async () => {
     .filter(Boolean);
 
   inlineError.hidden = true;
-  linkNotion.hidden = true;
   setFormDisabled(true);
+  saveState = 'saving';
   btnSave.innerHTML = '<div class="spinner"></div> Saving...';
   btnSave.classList.add('btn-saving');
 
@@ -177,12 +186,13 @@ btnSave.addEventListener('click', async () => {
   });
 
   if (result.type === 'SAVE_RESULT' && result.success && result.pageUrl) {
-    btnSave.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Saved to Notion';
+    saveState = 'saved';
+    savedPageUrl = result.pageUrl;
+    btnSave.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Open in Notion';
     btnSave.classList.remove('btn-saving');
     btnSave.classList.add('btn-success');
-    linkNotion.href = result.pageUrl;
-    linkNotion.hidden = false;
   } else {
+    saveState = 'idle';
     setFormDisabled(false);
     btnSave.textContent = 'Save to Notion';
     btnSave.classList.remove('btn-saving');

@@ -1,4 +1,4 @@
-import type { ArticleData, ArticleBlock } from '../types/article';
+import type { ArticleData, ArticleBlock, RichTextSegment } from '../types/article';
 
 export function extractArticle(): ArticleData {
   const url = window.location.href;
@@ -11,7 +11,7 @@ export function extractArticle(): ArticleData {
   if (isGenericTitle(title)) {
     const firstText = body.find(b => b.type === 'paragraph');
     if (firstText?.type === 'paragraph') {
-      const text = firstText.richText[0]?.text ?? '';
+      const text = firstText.richText.map(s => s.text).join('');
       const firstLine = text.split('\n')[0].trim();
       title = firstLine.length > 120 ? firstLine.slice(0, 120) + '...' : firstLine || 'Untitled';
     }
@@ -92,33 +92,244 @@ function extractTitle(): string {
   return docTitle || 'Untitled';
 }
 
-// --- Body: walk entire article, filter noise ---
+// --- Body extraction (structured, tag-aware) ---
 
 function extractBody(): ArticleBlock[] {
   const primary = document.querySelector('[data-testid="primaryColumn"]') as HTMLElement;
   if (!primary) return [];
 
-  // Strategy 1: structured walk of the <article> element (works for tweets)
+  // Strategy 1: structured walk of the <article> element (works for tweets and X Articles)
   const article = primary.querySelector('article') as HTMLElement;
   if (article) {
     const blocks: ArticleBlock[] = [];
     const seenImages = new Set<string>();
-    walkInOrder(article, blocks, seenImages);
+    walkStructured(article, blocks, seenImages);
     if (blocks.length > 0) return blocks;
   }
 
-  // Strategy 2: fallback for X Articles or any other page structure
-  // Use innerText of the entire primaryColumn — works regardless of DOM
+  // Strategy 2: fallback for unusual page structures
   return fallbackExtract(primary);
 }
 
+function walkStructured(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set<string>): void {
+  for (let i = 0; i < el.children.length; i++) {
+    const child = el.children[i] as HTMLElement;
+    if (!child.tagName) continue;
+    if (shouldSkipElement(child)) continue;
+
+    const tag = child.tagName.toLowerCase();
+
+    // Direct image
+    if (tag === 'img') {
+      emitImage(child as HTMLImageElement, blocks, seenImages);
+      continue;
+    }
+
+    // Image wrappers
+    if (tag === 'figure' || tag === 'picture') {
+      const img = child.querySelector('img') as HTMLImageElement | null;
+      if (img) emitImage(img, blocks, seenImages);
+      continue;
+    }
+
+    // Headings
+    if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
+      const text = (child.innerText ?? '').trim();
+      if (text && !isNoiseText(text)) {
+        const headingType = tag === 'h1' ? 'heading_1' : tag === 'h2' ? 'heading_2' : 'heading_3';
+        blocks.push({ type: headingType, text });
+      }
+      continue;
+    }
+    if (tag === 'h4' || tag === 'h5' || tag === 'h6') {
+      const text = (child.innerText ?? '').trim();
+      if (text && !isNoiseText(text)) {
+        blocks.push({ type: 'heading_3', text });
+      }
+      continue;
+    }
+
+    // Lists
+    if (tag === 'ul') {
+      emitListItems(child, blocks, 'bulleted_list_item', seenImages);
+      continue;
+    }
+    if (tag === 'ol') {
+      emitListItems(child, blocks, 'numbered_list_item', seenImages);
+      continue;
+    }
+
+    // Quote
+    if (tag === 'blockquote') {
+      const text = (child.innerText ?? '').trim();
+      if (text && !isNoiseText(text)) {
+        blocks.push({ type: 'quote', text });
+      }
+      continue;
+    }
+
+    // Divider
+    if (tag === 'hr') {
+      blocks.push({ type: 'divider' });
+      continue;
+    }
+
+    // Paragraph
+    if (tag === 'p') {
+      emitParagraph(child, blocks);
+      continue;
+    }
+
+    // Container — recurse, but also check for direct content
+    const innerText = (child.innerText ?? '').trim();
+    const hasBlockChildren = !!child.querySelector(
+      'div, p, article, section, ul, ol, blockquote, h1, h2, h3, h4, h5, h6, figure, picture, hr, img'
+    );
+
+    if (hasBlockChildren) {
+      walkStructured(child, blocks, seenImages);
+      continue;
+    }
+
+    // Leaf div with text — treat as paragraph
+    if (innerText && !isNoiseText(innerText)) {
+      emitParagraph(child, blocks);
+    }
+  }
+}
+
+function emitListItems(
+  list: HTMLElement,
+  blocks: ArticleBlock[],
+  itemType: 'bulleted_list_item' | 'numbered_list_item',
+  seenImages: Set<string>
+): void {
+  const items = list.querySelectorAll(':scope > li');
+  for (const li of Array.from(items)) {
+    const liEl = li as HTMLElement;
+    const text = (liEl.innerText ?? '').trim();
+    if (text && !isNoiseText(text)) {
+      blocks.push({ type: itemType, text });
+    }
+    // Check for nested images inside list items
+    const img = findContentImage(liEl);
+    if (img) emitImage(img, blocks, seenImages);
+  }
+}
+
+function emitParagraph(el: HTMLElement, blocks: ArticleBlock[]): void {
+  const richText = extractRichText(el);
+  const plainText = richText.map(s => s.text).join('').trim();
+  if (!plainText || isNoiseText(plainText)) return;
+
+  // Split paragraph by double-newline (in case innerText has multiple paragraphs)
+  // Most of the time it's one paragraph
+  if (plainText.length <= 2000 && !plainText.includes('\n\n')) {
+    blocks.push({ type: 'paragraph', richText });
+    return;
+  }
+
+  // Long paragraph or contains multiple — split safely
+  const text = plainText.replace(/\n{3,}/g, '\n\n');
+  const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  for (const para of paragraphs) {
+    for (let i = 0; i < para.length; i += 2000) {
+      blocks.push({
+        type: 'paragraph',
+        richText: [{ text: para.slice(i, i + 2000) }],
+      });
+    }
+  }
+}
+
+// --- Rich text extraction (preserves links, bold, italic, underline) ---
+
+function extractRichText(el: HTMLElement): RichTextSegment[] {
+  const segments: RichTextSegment[] = [];
+
+  function walk(node: Node, fmt: { bold?: boolean; italic?: boolean; underline?: boolean; href?: string }): void {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent ?? '';
+      if (text) {
+        segments.push({ text, ...fmt });
+      }
+      return;
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const e = node as HTMLElement;
+    const tag = e.tagName.toLowerCase();
+
+    // Skip non-content elements
+    if (tag === 'script' || tag === 'style' || tag === 'svg') return;
+
+    // <br> = newline
+    if (tag === 'br') {
+      segments.push({ text: '\n', ...fmt });
+      return;
+    }
+
+    let newFmt = fmt;
+    if (tag === 'strong' || tag === 'b') newFmt = { ...fmt, bold: true };
+    else if (tag === 'em' || tag === 'i') newFmt = { ...fmt, italic: true };
+    else if (tag === 'u') newFmt = { ...fmt, underline: true };
+    else if (tag === 'a') {
+      const href = e.getAttribute('href');
+      if (href) {
+        // Resolve relative URLs (X uses /username for internal links)
+        let absHref = href;
+        if (href.startsWith('/')) absHref = `https://x.com${href}`;
+        else if (href.startsWith('//')) absHref = `https:${href}`;
+        if (absHref.startsWith('http://') || absHref.startsWith('https://')) {
+          newFmt = { ...fmt, href: absHref };
+        }
+      }
+    }
+
+    for (const child of Array.from(e.childNodes)) {
+      walk(child, newFmt);
+    }
+  }
+
+  for (const child of Array.from(el.childNodes)) {
+    walk(child, {});
+  }
+
+  return mergeAdjacentSegments(segments);
+}
+
+function mergeAdjacentSegments(segments: RichTextSegment[]): RichTextSegment[] {
+  const merged: RichTextSegment[] = [];
+  for (const seg of segments) {
+    if (!seg.text) continue;
+    const last = merged[merged.length - 1];
+    if (
+      last &&
+      last.bold === seg.bold &&
+      last.italic === seg.italic &&
+      last.underline === seg.underline &&
+      last.href === seg.href
+    ) {
+      last.text += seg.text;
+    } else {
+      merged.push({ ...seg });
+    }
+  }
+  return merged;
+}
+
+// --- Fallback (when no <article>) ---
+
 function fallbackExtract(container: HTMLElement): ArticleBlock[] {
   const blocks: ArticleBlock[] = [];
-
-  // Collect content images
   const seenImages = new Set<string>();
+  walkStructured(container, blocks, seenImages);
+  if (blocks.length > 0) return blocks;
+
+  // Last resort: pure text via innerText
   const imgs = container.querySelectorAll('img');
-  for (const img of imgs) {
+  for (const img of Array.from(imgs)) {
     const src = (img as HTMLImageElement).src;
     if (isContentImageUrl(src) && !seenImages.has(src)) {
       seenImages.add(src);
@@ -126,10 +337,7 @@ function fallbackExtract(container: HTMLElement): ArticleBlock[] {
     }
   }
 
-  // Get all text via innerText
   const rawText = container.innerText ?? '';
-
-  // Clean noise line by line
   const lines = rawText.split('\n');
   const cleanedLines: string[] = [];
   for (const line of lines) {
@@ -142,14 +350,24 @@ function fallbackExtract(container: HTMLElement): ArticleBlock[] {
     cleanedLines.push(trimmed);
   }
 
-  // Rejoin and split into paragraphs
   const text = cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   if (text) {
-    emitText(blocks, text);
+    const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+    for (const para of paragraphs) {
+      if (para.length <= 2000) {
+        blocks.push({ type: 'paragraph', richText: [{ text: para }] });
+      } else {
+        for (let i = 0; i < para.length; i += 2000) {
+          blocks.push({ type: 'paragraph', richText: [{ text: para.slice(i, i + 2000) }] });
+        }
+      }
+    }
   }
 
   return blocks;
 }
+
+// --- Element filtering ---
 
 function shouldSkipElement(child: HTMLElement): boolean {
   const isSmall = (child.innerText?.trim().length ?? 0) < 80;
@@ -167,56 +385,9 @@ function shouldSkipElement(child: HTMLElement): boolean {
   return false;
 }
 
-function walkInOrder(el: HTMLElement, blocks: ArticleBlock[], seenImages: Set<string>): void {
-  for (let i = 0; i < el.children.length; i++) {
-    const child = el.children[i] as HTMLElement;
-    if (!child.tagName) continue;
-    const tag = child.tagName.toLowerCase();
-
-    // Skip known non-content sections
-    if (shouldSkipElement(child)) continue;
-
-    // Direct <img>
-    if (tag === 'img') {
-      emitImage(child as HTMLImageElement, blocks, seenImages);
-      continue;
-    }
-
-    // Check for content image in this element
-    const contentImg = findContentImage(child);
-    if (contentImg) {
-      emitImage(contentImg, blocks, seenImages);
-    }
-
-    // Get text
-    const innerText = child.innerText?.trim() ?? '';
-
-    // Check for block children (need recursion)
-    const hasBlockChildren = child.querySelector(
-      'div, p, article, section, ul, ol, blockquote, h1, h2, h3, figure, picture'
-    );
-
-    // No text — still recurse for deeper images
-    if (!innerText) {
-      if (hasBlockChildren) walkInOrder(child, blocks, seenImages);
-      continue;
-    }
-
-    // Skip noise text
-    if (isNoiseText(innerText)) continue;
-
-    // Leaf: emit text. Branch: recurse.
-    if (!hasBlockChildren) {
-      emitText(blocks, innerText);
-    } else {
-      walkInOrder(child, blocks, seenImages);
-    }
-  }
-}
-
 function findContentImage(el: HTMLElement): HTMLImageElement | null {
   const imgs = el.querySelectorAll('img');
-  for (const img of imgs) {
+  for (const img of Array.from(imgs)) {
     if (isContentImageUrl((img as HTMLImageElement).src)) {
       return img as HTMLImageElement;
     }
@@ -229,19 +400,6 @@ function emitImage(img: HTMLImageElement, blocks: ArticleBlock[], seenImages: Se
   if (src && isContentImageUrl(src) && !seenImages.has(src)) {
     seenImages.add(src);
     blocks.push({ type: 'image', url: src, altText: img.alt ?? '' });
-  }
-}
-
-function emitText(blocks: ArticleBlock[], text: string): void {
-  const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
-  for (const para of paragraphs) {
-    if (para.length <= 2000) {
-      blocks.push({ type: 'paragraph', richText: [{ text: para }] });
-    } else {
-      for (let i = 0; i < para.length; i += 2000) {
-        blocks.push({ type: 'paragraph', richText: [{ text: para.slice(i, i + 2000) }] });
-      }
-    }
   }
 }
 

@@ -277,7 +277,17 @@ body {
 
 .btn-success {
   background: var(--success) !important;
-  pointer-events: none;
+  cursor: pointer;
+  transition: background var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+
+.btn-success:hover {
+  background: #0EA371 !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.btn-success:active {
+  transform: scale(0.98);
 }
 
 /* Inline error */
@@ -296,29 +306,6 @@ body {
   font-size: 13px;
   color: var(--error);
   line-height: 1.4;
-}
-
-/* Notion link */
-.notion-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--brand);
-  text-decoration: none;
-  padding: 8px 0;
-  margin-top: 4px;
-  transition: opacity var(--duration-fast) ease;
-}
-
-.notion-link[hidden] {
-  display: none;
-}
-
-.notion-link:hover {
-  opacity: 0.8;
 }
 
 .form-disabled {
