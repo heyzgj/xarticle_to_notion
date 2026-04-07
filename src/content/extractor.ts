@@ -30,19 +30,8 @@ export function extractArticle(): ArticleData {
     body = stripDuplicateTitle(body, title);
   }
 
-  // --- Diagnostic logging (visible in the X tab DevTools console) ---
-  try {
-    const blockSummary = (b: ArticleBlock) => {
-      if (b.type === 'paragraph') return { type: b.type, text: b.richText.map(s => s.text).join('').slice(0, 120) };
-      if ('text' in b) return { type: b.type, text: b.text.slice(0, 120) };
-      return { type: b.type };
-    };
-    console.log('[X2Notion] title source:', titleSource, '| fallback:', titleFromBodyFallback);
-    console.log('[X2Notion] title:', JSON.stringify(title));
-    console.log('[X2Notion] rawBody (first 5):', rawBody.slice(0, 5).map(blockSummary));
-    console.log('[X2Notion] strippedBody (first 5):', body.slice(0, 5).map(blockSummary));
-    console.log('[X2Notion] blocks removed:', rawBody.length - body.length);
-  } catch {}
+  // Suppress unused-warning while keeping the source for future use
+  void titleSource;
 
   return { title, author: { displayName, handle }, publishedDate, url, body };
 }
