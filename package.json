@@ -1,12 +1,13 @@
 {
-  "name": "xarticle-to-notion",
+  "name": "x2notion",
   "version": "1.0.0",
-  "description": "Chrome extension to save X Articles to Notion",
+  "description": "Chrome extension that saves X (Twitter) Articles to Notion in one click",
   "private": true,
   "scripts": {
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "package": "npm run typecheck && npm run build && cd dist && zip -r ../x2notion.zip . -x '*.DS_Store' && cd .. && echo '\\n✓ Packaged: x2notion.zip'"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.287",

@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "X Article to Notion",
+  "name": "X2Notion — Save X Articles to Notion",
+  "short_name": "X2Notion",
   "version": "1.0.0",
-  "description": "Save X (Twitter) Articles to your Notion database",
-  "permissions": ["storage", "activeTab"],
+  "description": "Save X (Twitter) Articles to Notion in one click. Connect with OAuth, pick a database, done.",
+  "permissions": ["storage", "activeTab", "tabs"],
   "host_permissions": [
     "https://api.notion.com/*"
   ],
@@ -14,7 +15,8 @@
       "32": "icons/icon32.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
-    }
+    },
+    "default_title": "X2Notion — Save this article"
   },
   "background": {
     "service_worker": "background.js",

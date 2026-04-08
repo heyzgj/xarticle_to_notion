@@ -32,18 +32,6 @@ async function notionFetch(path: string, method: 'GET' | 'POST' | 'PATCH', body?
   return response.json();
 }
 
-export async function testConnection(token: string, databaseId: string): Promise<boolean> {
-  const response = await fetch(`${NOTION_API_BASE}/databases/${databaseId}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Notion-Version': NOTION_VERSION,
-      'Content-Type': 'application/json',
-    },
-  });
-  return response.ok;
-}
-
 export async function getCategories(): Promise<string[]> {
   const settings = await getSettings();
   if (!settings) return [];

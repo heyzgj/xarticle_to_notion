@@ -1,6 +1,6 @@
 import type { Message } from '../types/messages';
 import { getSettings, isConfigured, saveSettings } from '../utils/storage';
-import { saveArticle, getCategories, createX2NotionDatabase, listDatabases, getAccessibleResourceCounts } from './notionApi';
+import { saveArticle, createX2NotionDatabase, listDatabases, getAccessibleResourceCounts } from './notionApi';
 import { getCachedCategories, invalidateCache } from './categoryCache';
 
 export async function handleMessage(message: Message): Promise<Message> {
