@@ -148,6 +148,7 @@ body {
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   margin-bottom: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .article-title {
@@ -266,7 +267,7 @@ body {
 
 /* Action area */
 .action-area {
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 /* Save button states */

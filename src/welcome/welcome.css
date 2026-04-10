@@ -2,53 +2,69 @@
 @import '../shared/base.css';
 
 body {
-  background: var(--background);
+  background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
   display: flex;
   justify-content: center;
   align-items: flex-start;
   min-height: 100vh;
-  padding: 80px 20px;
+  padding: 60px 20px;
 }
 
 .container {
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
 }
 
+/* Card */
 .step {
   background: var(--surface);
   border-radius: var(--radius-2xl);
-  padding: 40px 36px;
-  box-shadow: var(--shadow-card);
+  padding: 36px 32px 32px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04);
   animation: fadeUp var(--duration-normal) var(--ease-standard) both;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle top accent bar */
+.step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand) 0%, #60A5FA 100%);
 }
 
 .step[hidden] {
   display: none;
 }
 
+/* Hero */
 .hero {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .hero-icon {
-  margin-bottom: 16px;
-  border-radius: var(--radius-xl);
+  margin-bottom: 14px;
+  border-radius: var(--radius-lg);
 }
 
 .hero h1 {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
   color: var(--text-primary);
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 
 .subtitle {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .subtitle strong {
@@ -56,27 +72,26 @@ body {
   font-weight: 600;
 }
 
-.how-it-works {
+/* Features (replaces how-it-works) */
+.features {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 14px;
+  margin-bottom: 28px;
 }
 
-.step-item {
+.feature-item {
   display: flex;
   align-items: flex-start;
   gap: 14px;
 }
 
-.step-number {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(29, 155, 240, 0.1);
+.feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(29, 155, 240, 0.1) 0%, rgba(96, 165, 250, 0.08) 100%);
   color: var(--brand);
-  font-size: 13px;
-  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,29 +99,51 @@ body {
   margin-top: 1px;
 }
 
-.step-content {
+.feature-content {
   flex: 1;
 }
 
-.step-title {
+.feature-title {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 2px;
 }
 
-.step-desc {
+.feature-desc {
   font-size: 13px;
   color: var(--text-muted);
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
+/* Tip (softened — informational, not warning) */
+.tip-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(29, 155, 240, 0.05);
+  border: 1px solid rgba(29, 155, 240, 0.12);
+  border-radius: var(--radius-md);
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.tip-box svg {
+  flex-shrink: 0;
+  color: var(--brand);
+  opacity: 0.6;
+}
+
+/* Privacy */
 .privacy {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 16px;
+  margin-top: 14px;
   font-size: 12px;
   color: var(--text-muted);
 }
@@ -116,6 +153,7 @@ body {
   color: var(--text-disabled);
 }
 
+/* Check circle (database + done steps) */
 .check-circle {
   width: 56px;
   height: 56px;
@@ -125,6 +163,7 @@ body {
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
 }
 
 .check-path {
@@ -137,6 +176,7 @@ body {
   to { stroke-dashoffset: 0; }
 }
 
+/* Database options */
 .db-options {
   display: flex;
   flex-direction: column;
@@ -152,7 +192,7 @@ body {
   border-radius: var(--radius-xl);
   text-align: left;
   cursor: pointer;
-  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
+  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
   position: relative;
   font-family: inherit;
 }
@@ -160,6 +200,7 @@ body {
 .db-option:hover {
   border-color: var(--brand);
   background: rgba(29, 155, 240, 0.02);
+  box-shadow: 0 2px 8px rgba(29, 155, 240, 0.08);
 }
 
 .db-option--recommended {
@@ -212,51 +253,6 @@ body {
   background-position: right 14px center;
   padding-right: 36px;
   cursor: pointer;
-}
-
-/* Tip box on connect screen */
-.tip-box {
-  display: flex;
-  gap: 12px;
-  padding: 14px 16px;
-  background: #FFF8E1;
-  border: 1px solid #FCE7A2;
-  border-radius: var(--radius-lg);
-  margin-bottom: 20px;
-  align-items: flex-start;
-}
-
-.tip-icon {
-  flex-shrink: 0;
-  color: #B45309;
-  margin-top: 1px;
-}
-
-.tip-content {
-  flex: 1;
-}
-
-.tip-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #92400E;
-  margin-bottom: 4px;
-}
-
-.tip-desc {
-  font-size: 12px;
-  color: #78350F;
-  line-height: 1.5;
-}
-
-.tip-desc strong {
-  font-weight: 600;
-}
-
-.tip-desc a {
-  color: #92400E;
-  text-decoration: underline;
-  font-weight: 600;
 }
 
 /* Error/recovery card */
@@ -341,6 +337,7 @@ body {
   flex-shrink: 0;
 }
 
+/* Done step */
 .next-step {
   text-align: center;
   font-size: 15px;
@@ -359,5 +356,6 @@ body {
   margin-top: 12px;
 }
 
+/* Utilities */
 .text-center { text-align: center; }
 .text-muted { color: var(--text-muted); font-size: 13px; }
