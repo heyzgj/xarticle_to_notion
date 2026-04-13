@@ -48,6 +48,43 @@ export async function getCategories(): Promise<string[]> {
   return category.select.options.map(o => o.name);
 }
 
+// --- Schema migration ---
+// Tracks which properties exist in the database so we only include valid ones.
+// Populated once per session on first save.
+let knownProperties: Set<string> | null = null;
+
+async function ensureDatabaseSchema(databaseId: string): Promise<Set<string>> {
+  if (knownProperties) return knownProperties;
+
+  // Fetch current database schema
+  const db = await notionFetch(`/databases/${databaseId}`, 'GET') as {
+    properties: Record<string, unknown>;
+  };
+
+  const existing = new Set(Object.keys(db.properties));
+
+  // Auto-add missing properties that our extension needs
+  const toAdd: Record<string, unknown> = {};
+  if (!existing.has('Type')) {
+    toAdd['Type'] = { select: { options: [{ name: 'Article' }, { name: 'Thread' }] } };
+  }
+  if (!existing.has('TweetCount')) {
+    toAdd['TweetCount'] = { number: {} };
+  }
+
+  if (Object.keys(toAdd).length > 0) {
+    try {
+      await notionFetch(`/databases/${databaseId}`, 'PATCH', { properties: toAdd });
+      for (const key of Object.keys(toAdd)) existing.add(key);
+    } catch {
+      // Migration failed (e.g., no edit permission) — we'll just skip those properties
+    }
+  }
+
+  knownProperties = existing;
+  return existing;
+}
+
 export async function saveArticle(
   article: ArticleData,
   category: string,
@@ -55,6 +92,9 @@ export async function saveArticle(
 ): Promise<NotionPage> {
   const settings = await getSettings();
   if (!settings) throw new Error('Extension not configured');
+
+  // Ensure Type and TweetCount properties exist (auto-migrates on first save)
+  const dbProps = await ensureDatabaseSchema(settings.databaseId);
 
   const blocks = articleToNotionBlocks(article);
   const firstBatch = blocks.slice(0, NOTION_MAX_BLOCKS_PER_REQUEST);
@@ -67,12 +107,13 @@ export async function saveArticle(
     Handle: { rich_text: [{ type: 'text', text: { content: article.author.handle } }] },
     Published: { date: { start: article.publishedDate.split('T')[0] } },
     Saved: { date: { start: new Date().toISOString().split('T')[0] } },
-    // Agent-friendly: content type helps agents filter articles vs threads
-    Type: { select: { name: article.contentType === 'thread' ? 'Thread' : 'Article' } },
   };
 
-  // Thread-specific: tweet count helps agents gauge thread depth
-  if (article.contentType === 'thread' && article.tweetCount) {
+  // Only include Type/TweetCount if the database has them (auto-migrated or pre-existing)
+  if (dbProps.has('Type')) {
+    properties['Type'] = { select: { name: article.contentType === 'thread' ? 'Thread' : 'Article' } };
+  }
+  if (dbProps.has('TweetCount') && article.contentType === 'thread' && article.tweetCount) {
     properties['TweetCount'] = { number: article.tweetCount };
   }
 
