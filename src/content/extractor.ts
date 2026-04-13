@@ -1,6 +1,102 @@
-import type { ArticleData, ArticleBlock, RichTextSegment } from '../types/article';
+import type { ArticleData, ArticleBlock, RichTextSegment, ContentType } from '../types/article';
 
 type TitleSource = 'heading' | 'tweet' | 'document';
+
+// --- Thread extraction ---
+
+export function extractThread(tweetCount: number): ArticleData {
+  const url = window.location.href;
+  const { displayName, handle } = extractAuthor();
+  const publishedDate = extractDate();
+
+  const primary = document.querySelector('[data-testid="primaryColumn"]') as HTMLElement;
+  const articles = primary ? Array.from(primary.querySelectorAll('article')) as HTMLElement[] : [];
+
+  // Filter to same-author tweets only (skip replies from others)
+  const mainAuthor = handle.toLowerCase();
+  const threadTweets = articles.filter(article => {
+    const authorEl = article.querySelector('[data-testid="User-Name"]');
+    if (!authorEl) return false;
+    const links = authorEl.querySelectorAll('a');
+    for (const link of Array.from(links)) {
+      const text = link.textContent?.trim() ?? '';
+      if (text.toLowerCase().startsWith('@') && text.toLowerCase() === mainAuthor) return true;
+      const href = (link.getAttribute('href') ?? '').toLowerCase();
+      if (href === '/' + mainAuthor.replace('@', '')) return true;
+    }
+    return false;
+  });
+
+  const total = threadTweets.length || tweetCount;
+  const body: ArticleBlock[] = [];
+
+  for (let i = 0; i < threadTweets.length; i++) {
+    // Divider between tweets (not before the first)
+    if (i > 0) {
+      body.push({ type: 'divider' });
+    }
+
+    // Tweet number label: **1/7** — agents use this to parse thread sequence
+    body.push({
+      type: 'paragraph',
+      richText: [{ text: `${i + 1}/${total}`, bold: true }],
+    });
+
+    // Extract this tweet's content blocks
+    const tweetBlocks = extractSingleTweet(threadTweets[i]);
+    body.push(...tweetBlocks);
+  }
+
+  // Title: first line of the first tweet
+  let title = 'Thread';
+  if (threadTweets.length > 0) {
+    const firstTweetText = threadTweets[0].querySelector('[data-testid="tweetText"]') as HTMLElement | null;
+    if (firstTweetText) {
+      const text = firstTweetText.innerText?.trim() ?? '';
+      const firstLine = text.split('\n')[0].trim();
+      title = firstLine.length > 120 ? firstLine.slice(0, 120) + '...' : firstLine || 'Thread';
+    }
+  }
+
+  return {
+    title,
+    author: { displayName, handle },
+    publishedDate,
+    url,
+    body,
+    contentType: 'thread',
+    tweetCount: total,
+  };
+}
+
+function extractSingleTweet(article: HTMLElement): ArticleBlock[] {
+  const blocks: ArticleBlock[] = [];
+  const seenImages = new Set<string>();
+
+  // Extract tweet text
+  const tweetText = article.querySelector('[data-testid="tweetText"]') as HTMLElement | null;
+  if (tweetText) {
+    const richText = extractRichText(tweetText);
+    const plainText = richText.map(s => s.text).join('').trim();
+    if (plainText) {
+      blocks.push({ type: 'paragraph', richText });
+    }
+  }
+
+  // Extract tweet images
+  const imgs = article.querySelectorAll('img');
+  for (const img of Array.from(imgs)) {
+    const src = (img as HTMLImageElement).src;
+    if (isContentImageUrl(src) && !seenImages.has(src)) {
+      seenImages.add(src);
+      blocks.push({ type: 'image', url: src, altText: (img as HTMLImageElement).alt ?? '' });
+    }
+  }
+
+  return blocks;
+}
+
+// --- Article extraction ---
 
 export function extractArticle(): ArticleData {
   const url = window.location.href;
@@ -33,7 +129,7 @@ export function extractArticle(): ArticleData {
   // Suppress unused-warning while keeping the source for future use
   void titleSource;
 
-  return { title, author: { displayName, handle }, publishedDate, url, body };
+  return { title, author: { displayName, handle }, publishedDate, url, body, contentType: 'article' };
 }
 
 /**

@@ -1,3 +1,5 @@
+export type ContentType = 'article' | 'thread';
+
 export interface ArticleData {
   title: string;
   author: {
@@ -7,6 +9,8 @@ export interface ArticleData {
   publishedDate: string;
   url: string;
   body: ArticleBlock[];
+  contentType: ContentType;
+  tweetCount?: number; // only for threads
 }
 
 export type ArticleBlock =

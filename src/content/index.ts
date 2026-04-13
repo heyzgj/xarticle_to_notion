@@ -1,6 +1,6 @@
 import type { Message } from '../types/messages';
-import { detectArticle } from './detector';
-import { extractArticle } from './extractor';
+import { detectContent } from './detector';
+import { extractArticle, extractThread } from './extractor';
 
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
@@ -12,10 +12,14 @@ chrome.runtime.onMessage.addListener(
 );
 
 async function handleExtract(): Promise<Message> {
-  const isArticle = await detectArticle();
-  if (!isArticle) {
+  const result = await detectContent();
+  if (!result.detected) {
     return { type: 'ARTICLE_NOT_FOUND' };
   }
-  const data = extractArticle();
+
+  const data = result.contentType === 'thread'
+    ? extractThread(result.tweetCount)
+    : extractArticle();
+
   return { type: 'ARTICLE_DATA', data };
 }

@@ -77,7 +77,13 @@ function getInitials(name: string): string {
 
 function showPreview(article: ArticleData) {
   previewTitle.textContent = article.title;
-  previewAuthor.textContent = article.author.displayName;
+
+  // Show content type badge for threads
+  if (article.contentType === 'thread' && article.tweetCount) {
+    previewAuthor.textContent = `${article.author.displayName} · Thread (${article.tweetCount} tweets)`;
+  } else {
+    previewAuthor.textContent = article.author.displayName;
+  }
 
   const initials = getInitials(article.author.displayName);
   previewAvatar.textContent = initials;

@@ -67,7 +67,14 @@ export async function saveArticle(
     Handle: { rich_text: [{ type: 'text', text: { content: article.author.handle } }] },
     Published: { date: { start: article.publishedDate.split('T')[0] } },
     Saved: { date: { start: new Date().toISOString().split('T')[0] } },
+    // Agent-friendly: content type helps agents filter articles vs threads
+    Type: { select: { name: article.contentType === 'thread' ? 'Thread' : 'Article' } },
   };
+
+  // Thread-specific: tweet count helps agents gauge thread depth
+  if (article.contentType === 'thread' && article.tweetCount) {
+    properties['TweetCount'] = { number: article.tweetCount };
+  }
 
   // Only include Category if user picked one (Notion rejects empty select.name)
   if (category && category.trim()) {
@@ -256,6 +263,8 @@ export async function createX2NotionDatabase(token: string): Promise<{ id: strin
       Handle: { rich_text: {} },
       Published: { date: {} },
       Saved: { date: {} },
+      Type: { select: { options: [{ name: 'Article' }, { name: 'Thread' }] } },
+      TweetCount: { number: {} },
       Category: { select: { options: [] } },
       Tags: { multi_select: { options: [] } },
     },

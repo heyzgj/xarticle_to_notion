@@ -1,27 +1,91 @@
-export async function detectArticle(): Promise<boolean> {
-  // Wait for content to load (X is a React SPA)
+import type { ContentType } from '../types/article';
+
+export interface DetectionResult {
+  detected: boolean;
+  contentType: ContentType;
+  tweetCount: number;
+}
+
+export async function detectContent(): Promise<DetectionResult> {
   await waitForContent();
 
   const primary = document.querySelector('[data-testid="primaryColumn"]');
-  if (!primary) return false;
+  if (!primary) return { detected: false, contentType: 'article', tweetCount: 0 };
 
-  // X Articles contain rich formatting not found in regular tweets
+  // --- Check for long-form X Article first ---
   const hasRichFormatting = primary.querySelector('h1, h2, h3') !== null;
-
-  // Check for article-specific elements
   const articleEl = primary.querySelector('article');
-  if (!articleEl) return false;
+  if (!articleEl) return { detected: false, contentType: 'article', tweetCount: 0 };
 
-  // Articles have substantial content with multiple paragraphs
   const textContent = articleEl.textContent ?? '';
   const hasLongContent = textContent.length > 500;
-
-  // Check for the "article" label/indicator
   const hasArticleLabel = !!primary.querySelector('[data-testid="article-cover-image"]')
     || document.querySelector('meta[property="og:type"][content="article"]') !== null;
 
-  // Combine signals: rich formatting + long content, OR explicit article label
-  return hasArticleLabel || (hasRichFormatting && hasLongContent);
+  if (hasArticleLabel || (hasRichFormatting && hasLongContent)) {
+    return { detected: true, contentType: 'article', tweetCount: 1 };
+  }
+
+  // --- Check for Thread (multiple tweets by the same author) ---
+  const threadResult = detectThread(primary);
+  if (threadResult.detected) return threadResult;
+
+  return { detected: false, contentType: 'article', tweetCount: 0 };
+}
+
+function detectThread(primary: Element): DetectionResult {
+  // Find all tweet articles in the conversation
+  const articles = Array.from(primary.querySelectorAll('article'));
+  if (articles.length < 2) {
+    return { detected: false, contentType: 'thread', tweetCount: 0 };
+  }
+
+  // Get the author handle of the first (main) tweet
+  const mainAuthor = getAuthorHandle(articles[0] as HTMLElement);
+  if (!mainAuthor) {
+    return { detected: false, contentType: 'thread', tweetCount: 0 };
+  }
+
+  // Count how many consecutive articles share the same author (= thread tweets).
+  // Stop when we hit a different author (= reply from someone else).
+  let threadCount = 0;
+  for (const article of articles) {
+    const handle = getAuthorHandle(article as HTMLElement);
+    if (handle === mainAuthor) {
+      threadCount++;
+    }
+  }
+
+  // A thread needs at least 2 tweets by the same author
+  if (threadCount >= 2) {
+    return { detected: true, contentType: 'thread', tweetCount: threadCount };
+  }
+
+  return { detected: false, contentType: 'thread', tweetCount: 0 };
+}
+
+function getAuthorHandle(article: HTMLElement): string | null {
+  const userNameEl = article.querySelector('[data-testid="User-Name"]');
+  if (!userNameEl) return null;
+
+  const links = userNameEl.querySelectorAll('a');
+  for (const link of Array.from(links)) {
+    const href = link.getAttribute('href') ?? '';
+    const text = link.textContent?.trim() ?? '';
+    if (href.startsWith('/') && !href.includes('/status/') && text.startsWith('@')) {
+      return text.toLowerCase();
+    }
+  }
+
+  // Fallback: extract from href
+  for (const link of Array.from(links)) {
+    const href = link.getAttribute('href') ?? '';
+    if (href.startsWith('/') && !href.includes('/status/')) {
+      return href.toLowerCase();
+    }
+  }
+
+  return null;
 }
 
 function waitForContent(): Promise<void> {
@@ -43,7 +107,6 @@ function waitForContent(): Promise<void> {
 
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Timeout after 8 seconds
     setTimeout(() => {
       observer.disconnect();
       resolve();
