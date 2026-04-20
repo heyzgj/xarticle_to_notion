@@ -1,13 +1,13 @@
 # Privacy Policy — X2Notion
 
-**Last updated: 2026-04-08**
+**Last updated: 2026-04-19**
 
-X2Notion ("the extension") is a Chrome extension that saves long-form X (Twitter) Articles to your personal Notion workspace. This policy explains what the extension does with your data — in plain English.
+X2Notion ("the extension") is a Chrome extension that saves X (Twitter) content — long-form Articles, threads, single tweets, and quote tweets — to your personal Notion workspace or local Obsidian vault. This policy explains what the extension does with your data — in plain English.
 
 ## TL;DR
 
 - **We do not collect, store, transmit, sell, share, or see any of your data.**
-- Everything the extension does happens **locally in your browser**, or directly between your browser and Notion's own servers.
+- Everything the extension does happens **locally in your browser**, or directly between your browser and the destination you choose (Notion's servers, or your own Obsidian vault running on 127.0.0.1).
 - The only server we operate is a tiny stateless OAuth proxy that helps you connect your Notion account. It never stores your data.
 
 ## What data the extension handles
@@ -18,10 +18,13 @@ When you click "Connect to Notion" during onboarding, Notion redirects you throu
 ### 2. The database you selected
 The name and ID of the Notion database you chose to save articles to. Stored in `chrome.storage.sync`. Same scope as the token — never sent anywhere else.
 
-### 3. The content of the article you save
-When you click "Save to Notion" on an X article, the extension reads the article's text, author, date, and images **from the current browser tab** and posts it directly to `api.notion.com` using your access token. The article content is **not sent to us or any third party** — it goes straight from your browser to Notion.
+### 3. The content you save
+When you click Save on an X article, thread, tweet, or quote tweet, the extension reads the content (text, author, date, images, video poster URLs) **from the current browser tab** and posts it directly to your selected destination(s) using your stored credentials. The content is **not sent to us or any third party** — it goes straight from your browser to your destination(s).
 
-### 4. Local preferences
+### 4. Obsidian Local REST API credentials (optional)
+If you choose to save to a local Obsidian vault, the extension stores the API key and host URL you provide for the [Obsidian Local REST API](https://github.com/coddingtonbear/obsidian-local-rest-api) plugin. Stored in `chrome.storage.sync`. Used only to PUT files into your local vault on `127.0.0.1`. Never sent anywhere else.
+
+### 5. Local preferences
 A single boolean flag remembering whether you want the "category & tags" form expanded by default. Stored in `chrome.storage.local`.
 
 ## What data the extension does NOT handle
@@ -39,11 +42,12 @@ The Worker exists only because Notion's OAuth spec requires a confidential clien
 
 ## Permissions we request and why
 
-- **`storage`** — Save your Notion token, database ID, and local preferences to `chrome.storage`.
-- **`activeTab`** — When you click the extension icon, access the current X tab to read the article you want to save.
-- **`tabs`** — Open the Notion page after a successful save, open the welcome tab on first install.
-- **`https://api.notion.com/*`** — Send article content directly to Notion's servers.
-- **Content script on `x.com`/`twitter.com`** — Detect whether the current page is a long-form Article and extract its content when you click Save.
+- **`storage`** — Save your Notion token, database ID, optional Obsidian credentials, and local preferences to `chrome.storage`.
+- **`activeTab`** — When you click the extension icon, access the current X tab to read the content you want to save.
+- **`tabs`** — Open the saved page after a successful save, open the welcome tab on first install.
+- **`https://api.notion.com/*`** — Send content directly to Notion's servers (only if you save to Notion).
+- **`https://127.0.0.1:27124/*` and `http://127.0.0.1:27123/*`** — Send content to your local Obsidian Local REST API plugin (only if you save to Obsidian; both endpoints stay on your own machine).
+- **Content script on `x.com`/`twitter.com`** — Detect whether the current page contains an Article, thread, tweet, or quote tweet, and extract its content when you click Save.
 
 ## Your choices
 

@@ -7,7 +7,13 @@ module.exports = (env, argv) => {
 
   return {
     entry: {
-      content: './src/content/index.ts',
+      // Platform content scripts — one per domain family
+      'content-x': './src/content/platforms/x/index.ts',
+      // Future platforms (uncomment as implemented):
+      // 'content-substack': './src/content/platforms/substack/index.ts',
+      // 'content-medium':   './src/content/platforms/medium/index.ts',
+      // 'content-reddit':   './src/content/platforms/reddit/index.ts',
+      // 'content-youtube':  './src/content/platforms/youtube/index.ts',
       background: './src/background/index.ts',
       popup: './src/popup/index.ts',
       options: './src/options/index.ts',
@@ -47,8 +53,6 @@ module.exports = (env, argv) => {
         filename: '[name].css',
       }),
     ],
-    // No source maps in production — they expose unminified source in the
-    // shipped extension. Dev mode still gets them for debugging.
     devtool: isProduction ? false : 'cheap-module-source-map',
   };
 };

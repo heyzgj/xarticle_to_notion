@@ -1,16 +1,23 @@
-export type ContentType = 'article' | 'thread';
+export type Source = 'x' | 'substack' | 'medium' | 'reddit' | 'youtube';
+
+export type ContentType = 'article' | 'thread' | 'tweet' | 'quote_tweet';
+
+export interface QuotedTweet {
+  author: { displayName: string; handle: string };
+  url?: string;
+  body: ArticleBlock[];
+}
 
 export interface ArticleData {
+  source: Source;
+  contentType: ContentType;
   title: string;
-  author: {
-    displayName: string;
-    handle: string;
-  };
+  author: { displayName: string; handle: string };
   publishedDate: string;
   url: string;
   body: ArticleBlock[];
-  contentType: ContentType;
-  tweetCount?: number; // only for threads
+  tweetCount?: number;       // threads only
+  quotedTweet?: QuotedTweet; // quote_tweet only
 }
 
 export type ArticleBlock =
@@ -19,6 +26,7 @@ export type ArticleBlock =
   | { type: 'heading_3'; text: string }
   | { type: 'paragraph'; richText: RichTextSegment[] }
   | { type: 'image'; url: string; altText?: string }
+  | { type: 'video'; posterUrl?: string; sourceUrl?: string; tweetUrl?: string }
   | { type: 'bulleted_list_item'; text: string }
   | { type: 'numbered_list_item'; text: string }
   | { type: 'quote'; text: string }

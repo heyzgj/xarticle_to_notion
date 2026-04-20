@@ -2,12 +2,23 @@
   "manifest_version": 3,
   "name": "X2Notion — Save X Articles to Notion",
   "short_name": "X2Notion",
-  "version": "1.0.0",
-  "description": "Save X (Twitter) Articles to Notion in one click. Connect with OAuth, pick a database, done.",
+  "version": "1.2.0",
+  "description": "Save X articles, threads, and tweets to Notion or Obsidian in one click.",
   "permissions": ["storage", "activeTab", "tabs"],
   "host_permissions": [
-    "https://api.notion.com/*"
+    "https://api.notion.com/*",
+    "https://127.0.0.1:27124/*",
+    "http://127.0.0.1:27123/*"
   ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Open X2Notion"
+    }
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -28,7 +39,7 @@
         "https://x.com/*",
         "https://twitter.com/*"
       ],
-      "js": ["content.js"],
+      "js": ["content-x.js"],
       "run_at": "document_idle"
     }
   ],

@@ -1,7 +1,55 @@
-import { NOTION_API_BASE, NOTION_VERSION, NOTION_MAX_BLOCKS_PER_REQUEST } from '../utils/constants';
-import { getSettings } from '../utils/storage';
-import type { ArticleData, ArticleBlock, RichTextSegment } from '../types/article';
-import type { NotionDatabaseSchema, NotionPage, NotionRichText, NotionBlock } from '../types/notion';
+import { NOTION_API_BASE, NOTION_VERSION, NOTION_MAX_BLOCKS_PER_REQUEST } from '../../utils/constants';
+import { getSettings } from '../../utils/storage';
+import type { ArticleData, ArticleBlock, RichTextSegment } from '../../types/article';
+import type { NotionDatabaseSchema, NotionPage, NotionRichText, NotionBlock } from '../../types/notion';
+import type { SaveOptions, SaveResult } from '../../types/destinations';
+import type { DestinationAdapter } from './base';
+
+// --- Adapter ---
+
+export class NotionAdapter implements DestinationAdapter {
+  readonly id = 'notion' as const;
+  readonly displayName = 'Notion';
+
+  async isConfigured(): Promise<boolean> {
+    const s = await getSettings();
+    return !!(s?.notionApiToken && s?.databaseId);
+  }
+
+  async save(article: ArticleData, opts: SaveOptions): Promise<SaveResult> {
+    try {
+      const page = await saveArticle(article, opts.category, opts.tags);
+      return { success: true, pageUrl: page.url, destination: 'notion' };
+    } catch (e) {
+      return { success: false, error: (e as Error).message, destination: 'notion' };
+    }
+  }
+
+  async getCategories(): Promise<string[]> {
+    return getCategories();
+  }
+
+  async checkDuplicate(url: string): Promise<{ isDuplicate: boolean; existingUrl?: string }> {
+    const settings = await getSettings();
+    if (!settings?.notionApiToken || !settings?.databaseId) {
+      return { isDuplicate: false };
+    }
+    try {
+      const result = await notionFetch(`/databases/${settings.databaseId}/query`, 'POST', {
+        filter: { property: 'URL', url: { equals: url } },
+        page_size: 1,
+      }) as { results: NotionPage[] };
+      if (result.results.length > 0) {
+        return { isDuplicate: true, existingUrl: result.results[0].url };
+      }
+    } catch {
+      // If the check fails (e.g. URL property doesn't exist), don't block the save
+    }
+    return { isDuplicate: false };
+  }
+}
+
+// --- Notion API internals ---
 
 async function notionFetch(path: string, method: 'GET' | 'POST' | 'PATCH', body?: unknown): Promise<unknown> {
   const settings = await getSettings();
@@ -18,7 +66,6 @@ async function notionFetch(path: string, method: 'GET' | 'POST' | 'PATCH', body?
   });
 
   if (response.status === 429) {
-    // Rate limited — retry after delay
     const retryAfter = parseInt(response.headers.get('Retry-After') ?? '1', 10);
     await sleep(retryAfter * 1000);
     return notionFetch(path, method, body);
@@ -39,7 +86,6 @@ export async function getCategories(): Promise<string[]> {
   const db = await notionFetch(`/databases/${settings.databaseId}`, 'GET') as NotionDatabaseSchema;
   const categoryProp = Object.values(db.properties).find(p => p.type === 'select' && p.id);
 
-  // Try to find by name "Category" first, then fall back to first select property
   const category = Object.entries(db.properties).find(
     ([name]) => name.toLowerCase() === 'category'
   )?.[1] ?? categoryProp;
@@ -49,27 +95,33 @@ export async function getCategories(): Promise<string[]> {
 }
 
 // --- Schema migration ---
-// Tracks which properties exist in the database so we only include valid ones.
-// Populated once per session on first save.
+
 let knownProperties: Set<string> | null = null;
 
 async function ensureDatabaseSchema(databaseId: string): Promise<Set<string>> {
   if (knownProperties) return knownProperties;
 
-  // Fetch current database schema
   const db = await notionFetch(`/databases/${databaseId}`, 'GET') as {
     properties: Record<string, unknown>;
   };
 
   const existing = new Set(Object.keys(db.properties));
 
-  // Auto-add missing properties that our extension needs
   const toAdd: Record<string, unknown> = {};
   if (!existing.has('Type')) {
-    toAdd['Type'] = { select: { options: [{ name: 'Article' }, { name: 'Thread' }] } };
+    toAdd['Type'] = { select: { options: [
+      { name: 'Article' }, { name: 'Thread' },
+      { name: 'Tweet' }, { name: 'Quote Tweet' },
+    ] } };
   }
   if (!existing.has('TweetCount')) {
     toAdd['TweetCount'] = { number: {} };
+  }
+  if (!existing.has('QuotedAuthor')) {
+    toAdd['QuotedAuthor'] = { rich_text: {} };
+  }
+  if (!existing.has('QuotedUrl')) {
+    toAdd['QuotedUrl'] = { url: {} };
   }
 
   if (Object.keys(toAdd).length > 0) {
@@ -77,7 +129,7 @@ async function ensureDatabaseSchema(databaseId: string): Promise<Set<string>> {
       await notionFetch(`/databases/${databaseId}`, 'PATCH', { properties: toAdd });
       for (const key of Object.keys(toAdd)) existing.add(key);
     } catch {
-      // Migration failed (e.g., no edit permission) — we'll just skip those properties
+      // Migration failed (e.g. no edit permission) — skip those properties
     }
   }
 
@@ -85,7 +137,9 @@ async function ensureDatabaseSchema(databaseId: string): Promise<Set<string>> {
   return existing;
 }
 
-export async function saveArticle(
+// --- Save ---
+
+async function saveArticle(
   article: ArticleData,
   category: string,
   tags: string[]
@@ -93,7 +147,6 @@ export async function saveArticle(
   const settings = await getSettings();
   if (!settings) throw new Error('Extension not configured');
 
-  // Ensure Type and TweetCount properties exist (auto-migrates on first save)
   const dbProps = await ensureDatabaseSchema(settings.databaseId);
 
   const blocks = articleToNotionBlocks(article);
@@ -109,19 +162,25 @@ export async function saveArticle(
     Saved: { date: { start: new Date().toISOString().split('T')[0] } },
   };
 
-  // Only include Type/TweetCount if the database has them (auto-migrated or pre-existing)
   if (dbProps.has('Type')) {
-    properties['Type'] = { select: { name: article.contentType === 'thread' ? 'Thread' : 'Article' } };
+    properties['Type'] = { select: { name: contentTypeToLabel(article.contentType) } };
   }
-  if (dbProps.has('TweetCount') && article.contentType === 'thread' && article.tweetCount) {
+  if (dbProps.has('TweetCount') && article.tweetCount != null) {
     properties['TweetCount'] = { number: article.tweetCount };
   }
-
-  // Only include Category if user picked one (Notion rejects empty select.name)
+  if (article.quotedTweet) {
+    const q = article.quotedTweet;
+    if (dbProps.has('QuotedAuthor')) {
+      const label = `${q.author.displayName} ${q.author.handle}`.trim();
+      properties['QuotedAuthor'] = { rich_text: [{ type: 'text', text: { content: label } }] };
+    }
+    if (dbProps.has('QuotedUrl') && q.url && isValidUrl(q.url)) {
+      properties['QuotedUrl'] = { url: q.url };
+    }
+  }
   if (category && category.trim()) {
     properties['Category'] = { select: { name: category.trim() } };
   }
-
   if (tags.length > 0) {
     properties['Tags'] = { multi_select: tags.map(t => ({ name: t })) };
   }
@@ -132,16 +191,25 @@ export async function saveArticle(
     children: firstBatch,
   }) as NotionPage;
 
-  // Append remaining blocks in batches
   for (let i = 0; i < remaining.length; i += NOTION_MAX_BLOCKS_PER_REQUEST) {
     const batch = remaining.slice(i, i + NOTION_MAX_BLOCKS_PER_REQUEST);
-    await notionFetch(`/blocks/${page.id}/children`, 'PATCH', {
-      children: batch,
-    });
+    await notionFetch(`/blocks/${page.id}/children`, 'PATCH', { children: batch });
   }
 
   return page;
 }
+
+function contentTypeToLabel(contentType: string): string {
+  switch (contentType) {
+    case 'article':     return 'Article';
+    case 'thread':      return 'Thread';
+    case 'tweet':       return 'Tweet';
+    case 'quote_tweet': return 'Quote Tweet';
+    default:            return 'Article';
+  }
+}
+
+// --- Block conversion ---
 
 function articleToNotionBlocks(article: ArticleData): NotionBlock[] {
   const blocks: NotionBlock[] = [];
@@ -149,10 +217,37 @@ function articleToNotionBlocks(article: ArticleData): NotionBlock[] {
   for (const block of article.body) {
     const result = convertBlock(block);
     if (result) {
-      if (Array.isArray(result)) {
-        blocks.push(...result);
-      } else {
-        blocks.push(result);
+      if (Array.isArray(result)) blocks.push(...result);
+      else blocks.push(result);
+    }
+  }
+
+  // Append quoted tweet as a clearly distinct section
+  if (article.quotedTweet) {
+    const q = article.quotedTweet;
+    blocks.push({ object: 'block', type: 'divider', divider: {} });
+
+    // Header: "↳ Quoted post by {Name} (@handle)" — handle linked to quoted tweet URL if available
+    const headerRt: NotionRichText[] = [
+      { type: 'text', text: { content: '↳ Quoted post by ' }, annotations: { bold: true } },
+      { type: 'text', text: { content: q.author.displayName }, annotations: { bold: true } },
+      { type: 'text', text: { content: ' ' } },
+      {
+        type: 'text',
+        text: q.url && isValidUrl(q.url)
+          ? { content: q.author.handle, link: { url: q.url } }
+          : { content: q.author.handle },
+        annotations: { italic: true },
+      },
+    ];
+    blocks.push({ object: 'block', type: 'paragraph', paragraph: { rich_text: headerRt } });
+
+    // Body in quote blocks (visually distinct from outer tweet)
+    for (const block of q.body) {
+      const result = convertBlock(block, true);
+      if (result) {
+        if (Array.isArray(result)) blocks.push(...result);
+        else blocks.push(result);
       }
     }
   }
@@ -163,26 +258,27 @@ function articleToNotionBlocks(article: ArticleData): NotionBlock[] {
 const NOTION_MAX_RICH_TEXT = 100;
 const NOTION_MAX_TEXT_LENGTH = 2000;
 
-function convertBlock(block: ArticleBlock): NotionBlock | NotionBlock[] | null {
+function convertBlock(block: ArticleBlock, inQuote = false): NotionBlock | NotionBlock[] | null {
+  // Wrap quoted tweet content in Notion quote blocks for visual distinction
+  const wrapType = inQuote ? 'quote' : null;
+
   switch (block.type) {
     case 'heading_1':
-      return {
-        object: 'block', type: 'heading_1',
-        heading_1: { rich_text: [richText(block.text)] },
-      };
+      return wrapType
+        ? { object: 'block', type: 'quote', quote: { rich_text: [richText(`# ${block.text}`)] } }
+        : { object: 'block', type: 'heading_1', heading_1: { rich_text: [richText(block.text)] } };
     case 'heading_2':
-      return {
-        object: 'block', type: 'heading_2',
-        heading_2: { rich_text: [richText(block.text)] },
-      };
+      return wrapType
+        ? { object: 'block', type: 'quote', quote: { rich_text: [richText(`## ${block.text}`)] } }
+        : { object: 'block', type: 'heading_2', heading_2: { rich_text: [richText(block.text)] } };
     case 'heading_3':
-      return {
-        object: 'block', type: 'heading_3',
-        heading_3: { rich_text: [richText(block.text)] },
-      };
+      return wrapType
+        ? { object: 'block', type: 'quote', quote: { rich_text: [richText(`### ${block.text}`)] } }
+        : { object: 'block', type: 'heading_3', heading_3: { rich_text: [richText(block.text)] } };
     case 'paragraph': {
       const allRt = block.richText.map(segmentToRichText);
-      return splitRichTextBlocks('paragraph', allRt);
+      const blockType = wrapType ?? 'paragraph';
+      return splitRichTextBlocks(blockType as 'paragraph' | 'quote', allRt);
     }
     case 'image':
       return {
@@ -190,16 +286,14 @@ function convertBlock(block: ArticleBlock): NotionBlock | NotionBlock[] | null {
         image: { type: 'external', external: { url: block.url } },
       };
     case 'video': {
-      // Poster image is already emitted as a preceding image block by the extractor.
-      // This paragraph links back to the original tweet so the video is one click away.
       const url = block.tweetUrl ?? block.sourceUrl;
-      const richText: NotionRichText = {
+      const richTextEl: NotionRichText = {
         type: 'text',
         text: { content: '[Video]', link: url ? { url } : null },
       };
       return {
-        object: 'block', type: 'paragraph',
-        paragraph: { rich_text: [richText] },
+        object: 'block', type: wrapType ?? 'paragraph',
+        [wrapType ?? 'paragraph']: { rich_text: [richTextEl] },
       };
     }
     case 'bulleted_list_item':
@@ -213,10 +307,7 @@ function convertBlock(block: ArticleBlock): NotionBlock | NotionBlock[] | null {
         numbered_list_item: { rich_text: [richText(block.text)] },
       };
     case 'quote':
-      return {
-        object: 'block', type: 'quote',
-        quote: { rich_text: [richText(block.text)] },
-      };
+      return { object: 'block', type: 'quote', quote: { rich_text: [richText(block.text)] } };
     case 'divider':
       return { object: 'block', type: 'divider', divider: {} };
     default:
@@ -238,20 +329,15 @@ function isValidUrl(url: string): boolean {
 }
 
 function segmentToRichText(segment: RichTextSegment): NotionRichText {
-  // Notion limits each text content to 2000 chars
   const content = segment.text.length > NOTION_MAX_TEXT_LENGTH
     ? segment.text.slice(0, NOTION_MAX_TEXT_LENGTH)
     : segment.text;
 
-  // Only include link if it's a valid absolute URL
   const link = segment.href && isValidUrl(segment.href)
     ? { url: segment.href }
     : null;
 
-  const rt: NotionRichText = {
-    type: 'text',
-    text: { content, link },
-  };
+  const rt: NotionRichText = { type: 'text', text: { content, link } };
 
   if (segment.bold || segment.italic || segment.underline) {
     rt.annotations = {
@@ -266,49 +352,36 @@ function segmentToRichText(segment: RichTextSegment): NotionRichText {
 
 function splitRichTextBlocks(
   blockType: 'paragraph' | 'quote' | 'bulleted_list_item' | 'numbered_list_item',
-  richText: NotionRichText[]
+  richTextArr: NotionRichText[]
 ): NotionBlock | NotionBlock[] {
-  if (richText.length <= NOTION_MAX_RICH_TEXT) {
-    return {
-      object: 'block', type: blockType,
-      [blockType]: { rich_text: richText },
-    };
+  if (richTextArr.length <= NOTION_MAX_RICH_TEXT) {
+    return { object: 'block', type: blockType, [blockType]: { rich_text: richTextArr } };
   }
-
-  // Split into chunks of NOTION_MAX_RICH_TEXT
   const blocks: NotionBlock[] = [];
-  for (let i = 0; i < richText.length; i += NOTION_MAX_RICH_TEXT) {
+  for (let i = 0; i < richTextArr.length; i += NOTION_MAX_RICH_TEXT) {
     blocks.push({
       object: 'block', type: blockType,
-      [blockType]: { rich_text: richText.slice(i, i + NOTION_MAX_RICH_TEXT) },
+      [blockType]: { rich_text: richTextArr.slice(i, i + NOTION_MAX_RICH_TEXT) },
     });
   }
   return blocks;
 }
 
+// --- Database creation ---
+
 export async function createX2NotionDatabase(token: string): Promise<{ id: string; parentPageName: string }> {
-  // Search for any page the integration has access to
   const searchResult = await notionFetch('/search', 'POST', {
     filter: { value: 'page', property: 'object' },
     page_size: 1,
-  }) as {
-    results: Array<{
-      id: string;
-      properties?: Record<string, { title?: Array<{ plain_text: string }> }>;
-    }>
-  };
+  }) as { results: Array<{ id: string; properties?: Record<string, { title?: Array<{ plain_text: string }> }> }> };
 
-  // Notion API requires a parent page to create a database (workspace root not allowed)
-  if (searchResult.results.length === 0) {
-    throw new Error('NO_PAGES_SHARED');
-  }
+  if (searchResult.results.length === 0) throw new Error('NO_PAGES_SHARED');
 
   const parentPage = searchResult.results[0];
   const parentPageName = extractPageTitle(parentPage) || 'your Notion workspace';
-  const parent = { type: 'page_id' as const, page_id: parentPage.id };
 
   const result = await notionFetch('/databases', 'POST', {
-    parent,
+    parent: { type: 'page_id', page_id: parentPage.id },
     title: [{ type: 'text', text: { content: 'X2Notion' } }],
     properties: {
       Title: { title: {} },
@@ -317,8 +390,13 @@ export async function createX2NotionDatabase(token: string): Promise<{ id: strin
       Handle: { rich_text: {} },
       Published: { date: {} },
       Saved: { date: {} },
-      Type: { select: { options: [{ name: 'Article' }, { name: 'Thread' }] } },
+      Type: { select: { options: [
+        { name: 'Article' }, { name: 'Thread' },
+        { name: 'Tweet' }, { name: 'Quote Tweet' },
+      ] } },
       TweetCount: { number: {} },
+      QuotedAuthor: { rich_text: {} },
+      QuotedUrl: { url: {} },
       Category: { select: { options: [] } },
       Tags: { multi_select: { options: [] } },
     },
@@ -342,19 +420,10 @@ function extractPageTitle(page: {
 
 export async function getAccessibleResourceCounts(): Promise<{ pages: number; databases: number }> {
   const [pageResult, dbResult] = await Promise.all([
-    notionFetch('/search', 'POST', {
-      filter: { value: 'page', property: 'object' },
-      page_size: 1,
-    }) as Promise<{ results: unknown[] }>,
-    notionFetch('/search', 'POST', {
-      filter: { value: 'database', property: 'object' },
-      page_size: 1,
-    }) as Promise<{ results: unknown[] }>,
+    notionFetch('/search', 'POST', { filter: { value: 'page', property: 'object' }, page_size: 1 }) as Promise<{ results: unknown[] }>,
+    notionFetch('/search', 'POST', { filter: { value: 'database', property: 'object' }, page_size: 1 }) as Promise<{ results: unknown[] }>,
   ]);
-  return {
-    pages: pageResult.results.length,
-    databases: dbResult.results.length,
-  };
+  return { pages: pageResult.results.length, databases: dbResult.results.length };
 }
 
 export async function listDatabases(): Promise<Array<{ id: string; title: string }>> {

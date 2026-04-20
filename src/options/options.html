@@ -3,15 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>X Article to Notion — Settings</title>
+  <title>X2Notion — Settings</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
   <div class="container">
     <h1>Settings</h1>
 
+    <!-- Notion connection -->
     <div class="card">
-      <h2 class="card-title">Connection</h2>
+      <h2 class="card-title">Notion</h2>
       <div id="status-connected" hidden>
         <div class="connection-status">
           <div class="status-dot status-dot--connected"></div>
@@ -38,11 +39,49 @@
       </div>
     </div>
 
+    <!-- Obsidian connection -->
+    <div class="card">
+      <h2 class="card-title">Obsidian</h2>
+      <p class="card-desc">Requires the <a href="https://github.com/coddingtonbear/obsidian-local-rest-api" target="_blank">Local REST API plugin</a> running in Obsidian.</p>
+
+      <div id="obsidian-connected" hidden>
+        <div class="connection-status">
+          <div class="status-dot status-dot--connected"></div>
+          <span>Connected</span>
+        </div>
+        <div class="connection-details">
+          <div class="detail-row">
+            <span class="detail-label">Vault folder</span>
+            <span id="obs-folder-display" class="detail-value">—</span>
+          </div>
+        </div>
+        <button id="btn-obs-edit" class="link-btn" style="margin-top:8px">Edit settings</button>
+      </div>
+
+      <div id="obsidian-form">
+        <div class="field-group">
+          <label class="field-label" for="obs-api-key">API Key</label>
+          <input type="password" id="obs-api-key" class="field-input" placeholder="Paste from Obsidian → Settings → Local REST API" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="obs-host">Host</label>
+          <input type="text" id="obs-host" class="field-input" placeholder="https://127.0.0.1:27124">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="obs-folder">Vault folder</label>
+          <input type="text" id="obs-folder" class="field-input" placeholder="Engram">
+        </div>
+        <div id="obs-error" class="error-msg" hidden></div>
+        <button id="btn-obs-save" class="btn btn-primary" style="margin-top:4px">Connect &amp; Test</button>
+      </div>
+    </div>
+
+    <!-- Preferences -->
     <div class="card">
       <h2 class="card-title">Preferences</h2>
       <div class="toggle-row">
         <div>
-          <div class="toggle-label">Expand category & tags by default</div>
+          <div class="toggle-label">Expand category &amp; tags by default</div>
           <div class="toggle-desc">Show the form fields when opening the popup</div>
         </div>
         <label class="toggle">
@@ -52,7 +91,7 @@
       </div>
     </div>
 
-    <p class="version">v1.0.0</p>
+    <p class="version">v1.2.0</p>
   </div>
   <script src="options.js"></script>
 </body>

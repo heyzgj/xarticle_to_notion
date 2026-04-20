@@ -194,7 +194,10 @@ btnSave.addEventListener('click', async () => {
   if (result.type === 'SAVE_RESULT' && result.success && result.pageUrl) {
     saveState = 'saved';
     savedPageUrl = result.pageUrl;
-    btnSave.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Open in Notion';
+    const label = result.duplicate
+      ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Already saved — open'
+      : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Open in Notion';
+    btnSave.innerHTML = label;
     btnSave.classList.remove('btn-saving');
     btnSave.classList.add('btn-success');
   } else {

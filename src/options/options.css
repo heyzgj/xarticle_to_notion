@@ -162,6 +162,83 @@ h1 {
   transform: translateX(16px);
 }
 
+.card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.card-desc a {
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.card-desc a:hover {
+  text-decoration: underline;
+}
+
+.field-group {
+  margin-bottom: 12px;
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.field-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+  background: var(--background);
+  font-size: 13px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--duration-fast) ease;
+  font-family: monospace;
+}
+
+.field-input:focus {
+  border-color: var(--brand);
+}
+
+.field-input::placeholder {
+  color: var(--text-disabled);
+  font-family: inherit;
+}
+
+.error-msg {
+  font-size: 12px;
+  color: var(--error);
+  margin-top: 6px;
+  margin-bottom: 4px;
+}
+
+.link-btn {
+  display: inline-block;
+  background: none;
+  border: none;
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.85;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.link-btn:hover {
+  opacity: 1;
+}
+
 .version {
   text-align: center;
   font-size: 12px;
