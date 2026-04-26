@@ -157,10 +157,14 @@ async function saveArticle(
     Title: { title: [{ type: 'text', text: { content: article.title } }] },
     URL: { url: article.url },
     Author: { rich_text: [{ type: 'text', text: { content: article.author.displayName } }] },
-    Handle: { rich_text: [{ type: 'text', text: { content: article.author.handle } }] },
     Published: { date: { start: article.publishedDate.split('T')[0] } },
     Saved: { date: { start: new Date().toISOString().split('T')[0] } },
   };
+
+  // Handle is X-specific (@-prefixed); skip empty values from non-X platforms.
+  if (dbProps.has('Handle') && article.author.handle) {
+    properties['Handle'] = { rich_text: [{ type: 'text', text: { content: article.author.handle } }] };
+  }
 
   if (dbProps.has('Type')) {
     properties['Type'] = { select: { name: contentTypeToLabel(article.contentType) } };

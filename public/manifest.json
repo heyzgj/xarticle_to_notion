@@ -41,6 +41,27 @@
       ],
       "js": ["content-x.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://mp.weixin.qq.com/s/*"],
+      "js": ["content-wechat.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.xiaohongshu.com/explore/*",
+        "https://www.xiaohongshu.com/discovery/item/*"
+      ],
+      "js": ["content-xhs.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://zhuanlan.zhihu.com/p/*",
+        "https://www.zhihu.com/question/*/answer/*"
+      ],
+      "js": ["content-zhihu.js"],
+      "run_at": "document_idle"
     }
   ],
   "options_page": "options.html",
