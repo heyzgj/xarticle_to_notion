@@ -8,10 +8,13 @@ module.exports = (env, argv) => {
   return {
     entry: {
       // Platform content scripts — one per domain family
-      'content-x':      './src/content/platforms/x/index.ts',
-      'content-wechat': './src/content/platforms/wechat/index.ts',
-      'content-xhs':    './src/content/platforms/xhs/index.ts',
-      'content-zhihu':  './src/content/platforms/zhihu/index.ts',
+      'content-x':       './src/content/platforms/x/index.ts',
+      'content-wechat':  './src/content/platforms/wechat/index.ts',
+      'content-xhs':     './src/content/platforms/xhs/index.ts',
+      'content-zhihu':   './src/content/platforms/zhihu/index.ts',
+      // content-generic is injected on demand via chrome.scripting (popup
+      // fallback), not declared in manifest content_scripts.
+      'content-generic': './src/content/platforms/generic/index.ts',
       // Future platforms (uncomment as implemented):
       // 'content-substack': './src/content/platforms/substack/index.ts',
       // 'content-medium':   './src/content/platforms/medium/index.ts',

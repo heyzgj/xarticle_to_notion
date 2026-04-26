@@ -4,7 +4,7 @@
   "short_name": "X2Notion",
   "version": "1.2.0",
   "description": "Save X articles, threads, and tweets to Notion or Obsidian in one click.",
-  "permissions": ["storage", "activeTab", "tabs"],
+  "permissions": ["storage", "activeTab", "tabs", "scripting"],
   "host_permissions": [
     "https://api.notion.com/*",
     "https://127.0.0.1:27124/*",

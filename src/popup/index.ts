@@ -51,6 +51,42 @@ async function sendTabMessage(tabId: number, msg: Message): Promise<Message> {
   return chrome.tabs.sendMessage(tabId, msg);
 }
 
+/**
+ * Try EXTRACT_ARTICLE on the current tab. If no platform-specific content
+ * script is registered (e.g., user is on a random blog), inject the generic
+ * Readability fallback content script via chrome.scripting and retry once.
+ *
+ * The injectedTabs Set prevents double-injection on popup re-open, which
+ * would register two onMessage listeners and cause duplicate sendResponse
+ * calls (Chrome silently drops the second, but the winner becomes timing-
+ * dependent — avoid the latent bug entirely).
+ */
+const injectedTabs = new Set<number>();
+
+async function extractFromTab(tabId: number): Promise<Message> {
+  try {
+    return await sendTabMessage(tabId, { type: 'EXTRACT_ARTICLE' });
+  } catch {
+    // No content script listening — inject generic fallback once per tab
+    if (!injectedTabs.has(tabId)) {
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          files: ['content-generic.js'],
+        });
+        injectedTabs.add(tabId);
+      } catch {
+        return { type: 'ARTICLE_NOT_FOUND' };
+      }
+    }
+    try {
+      return await sendTabMessage(tabId, { type: 'EXTRACT_ARTICLE' });
+    } catch {
+      return { type: 'ARTICLE_NOT_FOUND' };
+    }
+  }
+}
+
 function hashString(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -235,7 +271,7 @@ async function init() {
   }
 
   try {
-    const result = await sendTabMessage(tab.id, { type: 'EXTRACT_ARTICLE' });
+    const result = await extractFromTab(tab.id);
 
     if (result.type === 'ARTICLE_NOT_FOUND') {
       showState('noArticle');
