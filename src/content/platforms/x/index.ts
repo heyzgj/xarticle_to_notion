@@ -1,6 +1,8 @@
 import type { Message } from '../../../types/messages';
-import { detectContent } from './detector';
-import { extractArticle, extractThread, extractTweet, extractQuoteTweet } from './extractor';
+import { createPipeline } from '../../../pipeline/pipeline';
+import { x, waitForXContent } from '../../../pipeline/profiles/x';
+
+const pipeline = createPipeline([x]);
 
 chrome.runtime.onMessage.addListener(
   (message: Message, _sender, sendResponse) => {
@@ -8,17 +10,12 @@ chrome.runtime.onMessage.addListener(
       handleExtract().then(sendResponse);
       return true; // async response
     }
-  }
+  },
 );
 
 async function handleExtract(): Promise<Message> {
-  const result = await detectContent();
-  if (!result.detected) return { type: 'ARTICLE_NOT_FOUND' };
-
-  switch (result.contentType) {
-    case 'thread':      return { type: 'ARTICLE_DATA', data: extractThread(result.tweetCount) };
-    case 'tweet':       return { type: 'ARTICLE_DATA', data: extractTweet() };
-    case 'quote_tweet': return { type: 'ARTICLE_DATA', data: extractQuoteTweet() };
-    default:            return { type: 'ARTICLE_DATA', data: extractArticle() };
-  }
+  await waitForXContent();
+  const data = pipeline.run(document, window.location.href);
+  if (!data) return { type: 'ARTICLE_NOT_FOUND' };
+  return { type: 'ARTICLE_DATA', data };
 }

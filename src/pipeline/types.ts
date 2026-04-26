@@ -1,64 +1,33 @@
-// Pipeline types — separate from src/types/article.ts during the M1 transition.
-// Day 2 (X port) will reconcile this with the existing ArticleData.
+// Pipeline interfaces. The data shape itself (ArticleData / ArticleBlock /
+// RichTextSegment) lives in src/types/article.ts — the canonical type used by
+// destinations, popup, and the chrome.runtime message bus. We re-export the
+// data types here so profile authors only import from one place.
 
-export type PlatformId =
-  | 'x' | 'wechat' | 'xhs' | 'zhihu'
-  | 'substack' | 'medium' | 'reddit' | 'youtube'
-  | 'generic';
+export type {
+  ArticleBlock,
+  ArticleData,
+  ContentType,
+  QuotedTweet,
+  RichTextSegment,
+  Source,
+} from '../types/article';
 
-export type ContentKind =
-  | 'article' | 'thread' | 'tweet' | 'quote_tweet'
-  | 'note' | 'video' | 'answer';
-
-export interface RichTextSegment {
-  text: string;
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  href?: string;
-}
-
-export type ArticleBlock =
-  | { type: 'heading_1'; text: string }
-  | { type: 'heading_2'; text: string }
-  | { type: 'heading_3'; text: string }
-  | { type: 'paragraph'; richText: RichTextSegment[] }
-  | { type: 'image'; url: string; altText?: string }
-  | { type: 'video'; posterUrl?: string; sourceUrl?: string; tweetUrl?: string }
-  | { type: 'bulleted_list_item'; text: string }
-  | { type: 'numbered_list_item'; text: string }
-  | { type: 'quote'; text: string }
-  | { type: 'divider' };
-
-export interface PipelineArticleData {
-  platform: PlatformId;
-  contentType: ContentKind;
-  url: string;
-  title: string;
-  author: string;
-  site: string;
-  siteHandle?: string;
-  published: string;
-  body: ArticleBlock[];
-  tags?: string[];
-  location?: string;
-  tweetCount?: number;
-}
+import type { ArticleData, ContentType, Source } from '../types/article';
 
 export interface NotionPropertySpec {
   type: 'title' | 'rich_text' | 'select' | 'multi_select' | 'date' | 'url' | 'number';
 }
 
 export interface SiteProfile {
-  name: PlatformId;
+  name: Source;
   match: (url: string) => boolean;
-  detect?: (doc: Document, url: string) => ContentKind;
-  extract: (doc: Document, url: string) => PipelineArticleData | null;
+  detect?: (doc: Document, url: string) => ContentType;
+  extract: (doc: Document, url: string) => ArticleData | null;
   notionSchema?: Record<string, NotionPropertySpec>;
 }
 
 export interface Pipeline {
   profiles: SiteProfile[];
   fallback?: SiteProfile;
-  run(doc: Document, url: string): PipelineArticleData | null;
+  run(doc: Document, url: string): ArticleData | null;
 }

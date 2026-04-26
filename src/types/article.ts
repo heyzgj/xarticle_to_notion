@@ -1,6 +1,11 @@
-export type Source = 'x' | 'substack' | 'medium' | 'reddit' | 'youtube';
+export type Source =
+  | 'x' | 'wechat' | 'xhs' | 'zhihu'
+  | 'substack' | 'medium' | 'reddit' | 'youtube'
+  | 'generic';
 
-export type ContentType = 'article' | 'thread' | 'tweet' | 'quote_tweet';
+export type ContentType =
+  | 'article' | 'thread' | 'tweet' | 'quote_tweet'
+  | 'note' | 'video' | 'answer';
 
 export interface QuotedTweet {
   author: { displayName: string; handle: string };
@@ -16,6 +21,12 @@ export interface ArticleData {
   publishedDate: string;
   url: string;
   body: ArticleBlock[];
+  // Optional cross-platform metadata
+  site?: string;
+  siteHandle?: string;
+  tags?: string[];
+  location?: string;
+  // X-specific
   tweetCount?: number;       // threads only
   quotedTweet?: QuotedTweet; // quote_tweet only
 }

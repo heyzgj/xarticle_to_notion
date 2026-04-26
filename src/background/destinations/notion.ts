@@ -1,6 +1,6 @@
 import { NOTION_API_BASE, NOTION_VERSION, NOTION_MAX_BLOCKS_PER_REQUEST } from '../../utils/constants';
 import { getSettings } from '../../utils/storage';
-import type { ArticleData, ArticleBlock, RichTextSegment } from '../../types/article';
+import type { ArticleData, ArticleBlock, ContentType, RichTextSegment } from '../../types/article';
 import type { NotionDatabaseSchema, NotionPage, NotionRichText, NotionBlock } from '../../types/notion';
 import type { SaveOptions, SaveResult } from '../../types/destinations';
 import type { DestinationAdapter } from './base';
@@ -199,13 +199,20 @@ async function saveArticle(
   return page;
 }
 
-function contentTypeToLabel(contentType: string): string {
+function contentTypeToLabel(contentType: ContentType): string {
   switch (contentType) {
     case 'article':     return 'Article';
     case 'thread':      return 'Thread';
     case 'tweet':       return 'Tweet';
     case 'quote_tweet': return 'Quote Tweet';
-    default:            return 'Article';
+    case 'note':        return 'Note';
+    case 'video':       return 'Video';
+    case 'answer':      return 'Answer';
+    default: {
+      // Exhaustiveness check — adding to ContentType without updating this switch is a type error.
+      const _exhaustive: never = contentType;
+      return _exhaustive;
+    }
   }
 }
 
