@@ -15,6 +15,8 @@ module.exports = (env, argv) => {
       // content-generic is injected on demand via chrome.scripting (popup
       // fallback), not declared in manifest content_scripts.
       'content-generic': './src/content/platforms/generic/index.ts',
+      // content-toast is injected on demand by the quick-save orchestrator.
+      'content-toast':   './src/content/toast/index.ts',
       // Future platforms (uncomment as implemented):
       // 'content-substack': './src/content/platforms/substack/index.ts',
       // 'content-medium':   './src/content/platforms/medium/index.ts',

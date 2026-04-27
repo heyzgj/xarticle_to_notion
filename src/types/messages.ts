@@ -1,5 +1,7 @@
 import type { ArticleData } from './article';
 
+export type ToastKind = 'pending' | 'info' | 'success' | 'error';
+
 export type Message =
   | { type: 'EXTRACT_ARTICLE' }
   | { type: 'ARTICLE_DATA'; data: ArticleData }
@@ -21,4 +23,5 @@ export type Message =
   | { type: 'TEST_OBSIDIAN' }
   | { type: 'TEST_OBSIDIAN_RESULT'; connected: boolean; error?: string }
   | { type: 'SAVE_OBSIDIAN_SETTINGS'; apiKey: string; host: string; vaultFolder: string }
-  | { type: 'SAVE_OBSIDIAN_SETTINGS_RESULT'; success: boolean; error?: string };
+  | { type: 'SAVE_OBSIDIAN_SETTINGS_RESULT'; success: boolean; error?: string }
+  | { type: 'SHOW_TOAST'; text: string; kind?: ToastKind; actionUrl?: string };

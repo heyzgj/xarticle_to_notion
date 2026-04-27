@@ -11,12 +11,12 @@
     "http://127.0.0.1:27123/*"
   ],
   "commands": {
-    "_execute_action": {
+    "quick-save": {
       "suggested_key": {
         "default": "Ctrl+Shift+S",
         "mac": "Command+Shift+S"
       },
-      "description": "Open Lope"
+      "description": "Quick-save the current page to Lope"
     }
   },
   "action": {
