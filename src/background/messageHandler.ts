@@ -1,7 +1,7 @@
 import type { Message } from '../types/messages';
 import { getSettings, isConfigured, saveSettings } from '../utils/storage';
 import { OBSIDIAN_DEFAULT_HOST, OBSIDIAN_DEFAULT_FOLDER } from '../utils/constants';
-import { createX2NotionDatabase, listDatabases, getAccessibleResourceCounts } from './destinations/notion';
+import { createLopeDatabase, listDatabases, getAccessibleResourceCounts } from './destinations/notion';
 import { testObsidianConnection } from './destinations/obsidian';
 import { getActiveAdapters } from './destinations/registry';
 import { getCachedCategories, invalidateCache } from './categoryCache';
@@ -70,8 +70,8 @@ export async function handleMessage(message: Message): Promise<Message> {
         if (!settings?.notionApiToken) {
           return { type: 'CREATE_DATABASE_RESULT', success: false, error: 'Not connected' };
         }
-        const db = await createX2NotionDatabase(settings.notionApiToken);
-        await saveSettings({ ...settings, databaseId: db.id, databaseName: 'X2Notion' });
+        const db = await createLopeDatabase(settings.notionApiToken);
+        await saveSettings({ ...settings, databaseId: db.id, databaseName: 'Lope' });
         return { type: 'CREATE_DATABASE_RESULT', success: true, databaseId: db.id, parentPageName: db.parentPageName };
       } catch (e) {
         return { type: 'CREATE_DATABASE_RESULT', success: false, error: (e as Error).message };

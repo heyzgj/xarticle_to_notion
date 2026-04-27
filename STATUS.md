@@ -3,72 +3,91 @@
 > 开一个新 session / 周一早上回来看——先读这个文件。
 > 目标：30 秒内知道"现在在哪 / 下一步是什么 / 谁在等谁"。
 
-**Last updated**: 2026-04-21
+**Last updated**: 2026-04-27
 
 ---
 
 ## 🚢 刚 shipped
 
-- **v1.2** 提交 Chrome Web Store（2026-04-21）
-  - commits: `bb88a01` feat v1.2 + `6b5f939` screenshots
-  - zip: `x2notion-1.2.0.zip`（30KB）
-  - 新能力：threads / single tweets / quote tweets / Obsidian / 快捷键 / 重复检测 / agent-friendly title schema
-- **LESSONS_LEARNED.md** 首版落盘（21 条 lesson，A–E 五大类）
-- **Privacy URL 公开**：`raw.githubusercontent.com/heyzgj/xarticle_to_notion/main/PRIVACY.md`
+- **Lope rebrand**（2026-04-27）— extension 改名 Lope（manifest / package / DB title / UI copy / docs）。OAuth Worker URL 留旧子域（renaming = 重新部署 + Notion integration callback 更新，单独运维任务）。
+- **M1 — `SiteProfile` content pipeline**（2026-04-25 → 2026-04-26，commits `78d3cf2` → `cc11e38`）
+  - 5 平台 profile：x / wechat / xhs / zhihu / generic（Mozilla Readability）
+  - X 老 extractor (978 LOC) 折成 700 LOC profile，4 day CC，4 commits，每天评估器过审
+  - generic profile 走 `chrome.scripting.executeScript` 按需注入，不进 manifest content_scripts，避免 `<all_urls>` 安装警告
+  - `ArticleData` 类型统一，`ContentType` 加 `note` / `video` / `answer`，`Source` 加 `wechat` / `xhs` / `zhihu` / `generic`
+- **Lope v0**（2026-04-26）— agent consult layer live, dogfooded
+  - `~/.claude/skills/find-lope/SKILL.md` — silently no-ops when `~/Lope/INDEX.md` missing
+  - `~/.claude/commands/lope-refresh.md` + `~/.lope/sync.py`（130 行 stdlib，幂等）
+  - 6 saves 拉入并 enrich，INDEX 重生成
+- **v1.2** 提交 Chrome Web Store（2026-04-21，仍在审）
+
+---
+
+## 🧊 Lope deferred items（下次碰 Lope 时处理）
+
+- **Rotate Notion token** — 当前 token 在本会话 transcript 里曝光过
+- **`sync.py` nit 1**: `if type_ == "thread"` / `"quote-tweet"` 比较是 lowercase，但 v1.2 写的是 `Thread` / `Quote Tweet`。Fix: `type_.lower()`
+- **`sync.py` nit 2**: Author field 存的是 display name 不是 handle。Fix: 从 URL 解析 `/{handle}/`
+
+## 🧊 Rebrand deferred items
+
+- **OAuth Worker rename** — `x2notion-oauth.heyzgj.workers.dev` → `lope-oauth.<account>.workers.dev`。需要：新 Worker 部署 + Notion 开发者后台 callback URL 更新 + `OAUTH_WORKER_URL` 常量切换。运维任务，不阻塞 dev。
+- **Visual identity** — 16/32/48/128 monochrome icon 套图。当前用 v1.2 老图（X2Notion 样式）。需要单独设计 pass。
+- **GitHub repo rename** — `xarticle_to_notion` → `lope`。会断掉 README clone URL + 任何外部反链。低优先。
 
 ---
 
 ## 🕰️ 等待中
 
-| 等什么 | 预期时间 | 如果超时怎么办 |
+| 等什么 | 预期 | 备用方案 |
 |-------|---------|---------------|
-| Chrome Web Store 审核结果 | 1–7 天，最长 14 天 | 看 email；如审核挂了改 permission 说明再提交 |
+| Chrome Web Store v1.2 审核结果 | 1–7 天起（提交 2026-04-21） | 直接撤掉提交 v1.3（Lope rebrand + 5 平台），等于一个完整新版 |
 
 ---
 
 ## 🎯 现在应该做的事（按优先级）
 
-### 🔥 M0 — 用户验证（7 天时间盒，2026-04-28 截止）
+### 🥇 M2 — Reflex Save UX（1 周 CC）
 
-**这是 design doc 里的强制前置步骤**。Store 审核期间就开始，不等上线。
+设计：`Cmd+Shift+S` → toast → done，5 平台共用一条 reflex 路径。Popup 保留作 secondary（点击图标进入，留 category/tags 可编辑）。
 
-- [ ] 列出 5 个具体 X handle（不是"AI hackers 类别"，是**具体人名**）
-- [ ] 准备 DM 文案（简洁，附 zip 下载 + loading 说明）
-- [ ] 发出 5 条 DM
-- [ ] 观察他们的反应：是否保存？遇到什么困惑？
-- [ ] 追问："这工具你以为它是做什么的？" / "你会明天再用一次吗？"
-- [ ] 本周结束（2026-04-28）做 go/no-go 决定
+不删 popup form——95% 走 reflex 是默认，5% 想 save-time 控制的人有救济通道。
 
-**如果 <3/5 说"会用"**：暂停 M1，revise thesis。
-**如果 ≥3/5 说"会用"**：按计划开 M1。
+ship 为 v1.4 internal。
 
-### 🧊 M1 — Universal Capture（gate: M0 通过）
+### 🥈 v1.3 Web Store 重新提交
 
-4 天 CC。不要在 M0 验证之前启动。细节看 design doc。
+- 更新 `docs/STORE_LISTING.md` 用 Lope copy + 多平台说明 + scripting permission 解释
+- Build + zip + 提交（撤掉/取代 v1.2 的审核）
+- 新 install warning：从"仅 X.com"扩到"X / WeChat / XHS / Zhihu" + scripting permission（按需注入 generic）
 
-启动前先跑一轮 `/plan-eng-review` 锁 M1 架构（defuddle adapter 接口、kill-switch、test fixture 协议）。
+### 🥉 Lope deferred 3 项
+
+下次碰 Lope 时清掉：token rotate + sync.py 两个 nit。
 
 ---
 
-## 📅 后续里程碑（冰冻，M0 通过后解冻）
+## 📅 后续里程碑
 
 ```
-M1  Universal Capture       4 days CC  → v1.3 on Web Store
-M2  Reflex Save UX          1 week CC  → v1.4 internal
-M3  The Pile + rebrand name 2 weeks CC → v1.5 internal
-M4  Agent Access (MCP)      3 weeks CC → v2.0 rebrand
-Future  Promoted topic skills（gated on ≥5 external users × ≥2 weeks）
+✅ M1   Universal Capture           4 days CC   shipped 2026-04-26
+✅ M3v0 Lope agent layer (skill版)  1 day CC    shipped 2026-04-26
+✅ —    Rebrand to Lope             0.5 day CC  shipped 2026-04-27
+🔜 M2   Reflex Save UX              1 week CC   → v1.4
+🔜 M3.x Pile architecture (write-direct + schema migration) 2 weeks CC → v1.5
+🔜 M4   MCP transport               gated on ≥5 external users → v2.0
 ```
 
-完整 roadmap 见 `ROADMAP.md` 和 design doc。
+完整 roadmap 见 `ROADMAP.md`。
+
+> 注：原 design doc 的 M0（DM 5 个 X power user 做 demand validation）已**显式跳过**——产品定位从"Anthropic-adjacent X power users"扩到"EN/CN bilingual Claude Code drivers"，原 5 人样本与新 wedge 不匹配。dogfood-first（user 自己每天用）替代 M0 作为验证机制。
 
 ---
 
 ## 🧭 没有明确 deadline 但值得做的
 
-- [ ] 跑 `/design-consultation` 做 M3 rebrand 的 brand 方向（M3 用得上）
-- [ ] 决定命名：Trace / Distill / Cortex / Imprint / Steep 之一（M3 前锁定）
-- [ ] 考虑写一篇"why agent-first clipping"的 blog post，跟 Karpathy meme 同波段（若 M0 通过）
+- [ ] Lope monochrome icon 设计 pass（M3.x 前完成）
+- [ ] 写一篇"why agent-first clipping"的 blog post（v2.0 launch 时用）
 
 ---
 
@@ -78,25 +97,20 @@ Future  Promoted topic skills（gated on ≥5 external users × ≥2 weeks）
 |---------|-------|
 | 架构、agent-first 原则、代码导航 | `CLAUDE.md` |
 | 完整产品 roadmap + vision | `ROADMAP.md` |
-| v1.2 的完整 design doc（office-hours 产出） | `~/.gstack/projects/xarticle-to-notion/supergeorge-main-design-*.md` |
+| v1.2 的完整 design doc | `~/.gstack/projects/xarticle-to-notion/supergeorge-main-design-*.md` |
 | 踩过的坑 + 规则 | `LESSONS_LEARNED.md` |
-| 命名/品牌决策 + placeholder 约定 | `memory/project_naming.md` |
-| Save-and-forget 产品 thesis | `memory/project_save_and_forget_thesis.md` |
+| 命名/品牌决策 | `memory/project_naming.md` |
+| Save-and-forget thesis | `memory/project_save_and_forget_thesis.md` |
 | Chrome Web Store 提交文案 | `docs/STORE_LISTING.md` |
+| Lope v0 落地细节 + deferred items | `memory/project_lope_v0_shipped.md` |
 
 ---
 
-## 🛠️ 如何维护这个文件
+## 🛠️ 维护提示
 
-**何时更新**：
-- Ship 一个版本之后（移到 🚢 shipped，从 🎯 移除）
-- 开始一个新 milestone 之后（🎯 更新为当前 in-flight）
-- 等到东西（store 审核、用户反馈）加入 🕰️ 等待中
-- 等待解除 / 超时时更新或移除
-- 至少每周扫一遍（看有没有 stale 信息）
+每次 ship 后：
+1. 移到 🚢 shipped
+2. 从 🎯 现在做的移除
+3. 加新 🎯 项
 
-**原则**：
-- 这是**执行 log**，不是规划 doc（规划是 ROADMAP.md / design doc 的工作）
-- 每一条都要**可行动**或**可追踪**，不写含糊信息
-- 过时信息要**删**，不要堆积（历史留给 git）
-- **30 秒内扫完**——字数多了说明抽象层级不对
+文件目标：30 秒扫完。字数过多说明抽象层级偏低。

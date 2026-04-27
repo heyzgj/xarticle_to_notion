@@ -6,7 +6,7 @@ import type { ArticleData, ArticleBlock, RichTextSegment } from '../types/articl
 export function articleToMarkdown(article: ArticleData): string {
   const date = new Date().toISOString().split('T')[0];
   const published = article.publishedDate.split('T')[0];
-  const tags = ['engram', article.source, article.contentType];
+  const tags = ['lope', article.source, article.contentType];
   const tagsYaml = tags.map(t => `  - ${t}`).join('\n');
 
   const frontmatterLines = [

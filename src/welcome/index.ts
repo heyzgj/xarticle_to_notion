@@ -104,7 +104,7 @@ async function runCreateDatabase() {
   const result = await sendMessage({ type: 'CREATE_DATABASE' });
 
   if (result.type === 'CREATE_DATABASE_RESULT' && result.success) {
-    showDoneStep('X2Notion', result.parentPageName);
+    showDoneStep('Lope', result.parentPageName);
     return;
   }
 
@@ -162,7 +162,7 @@ btnConnect.addEventListener('click', startOAuth);
 // Reconnect button (no-pages recovery) — restart OAuth
 btnReconnect.addEventListener('click', startOAuth);
 
-// Create X2Notion database (manual click — when user has both pages and databases)
+// Create Lope database (manual click — when user has both pages and databases)
 btnCreateDb.addEventListener('click', async () => {
   dbLoading.hidden = false;
   btnCreateDb.setAttribute('disabled', '');
@@ -219,7 +219,7 @@ checkOAuthReturn().then(returned => {
   if (!returned) {
     getSettings().then(settings => {
       if (settings?.notionApiToken && settings?.databaseId) {
-        showDoneStep(settings.databaseName ?? 'X2Notion');
+        showDoneStep(settings.databaseName ?? 'Lope');
       }
     });
   }

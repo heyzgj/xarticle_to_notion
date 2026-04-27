@@ -1,12 +1,10 @@
-# Engram — Roadmap
+# Lope — Roadmap
 
 ## Mission
 
-Every article, thread, and video you save is an engram — a memory unit that shapes your
-personal agent's understanding of you, your interests, and your world.
+Save now. Your agent reads later.
 
-Engram is a personal content pipeline: you clip from the web, it lands in your knowledge
-base as structured data, your agent reads it and knows you better.
+Lope is a personal content pipeline: you clip from the web, it lands in your knowledge base as structured data, your agent reads it and knows you better. The recall layer (`find-lope` skill + `~/Lope/` pile) is the product; the save extension is the curation surface.
 
 ---
 
@@ -15,7 +13,7 @@ base as structured data, your agent reads it and knows you better.
 ### v1.0 — Foundation
 - X long-form Article extraction (title, body, images, links)
 - Notion OAuth setup (no API token copy-paste)
-- Auto-create X2Notion database on first connect
+- Auto-create Notion database on first connect
 - Category + tags metadata on save
 - Premium popup UI
 
@@ -29,70 +27,91 @@ base as structured data, your agent reads it and knows you better.
 - Single tweet support — `Type=Tweet`, tweet body as Notion content
 - Quote tweet support — outer tweet + quoted tweet as nested Notion quote blocks
 - `DestinationAdapter` interface — clean abstraction over all destinations
-- `destinations/notion.ts` — Notion reimplemented as an adapter
-- `destinations/obsidian.ts` — Obsidian via Local REST API, Markdown + YAML frontmatter
-- Multi-destination: save to Notion AND Obsidian simultaneously
-- Duplicate detection — queries Notion by URL before saving; popup shows "Already saved"
-- Keyboard shortcut — `Cmd+Shift+S` / `Ctrl+Shift+S` to trigger popup
-- Multi-platform content script architecture (`content-x.js`, future `content-substack.js`, etc.)
+- `destinations/notion.ts` + `destinations/obsidian.ts` — multi-destination saves
+- Duplicate detection — queries Notion by URL before saving
+- Keyboard shortcut — `Cmd+Shift+S` / `Ctrl+Shift+S`
+- Multi-platform content script architecture
+
+### v1.3 — Pipeline + Multi-Platform + Lope rebrand (current)
+- **`SiteProfile` content pipeline** (M1, four commits 78d3cf2 → cc11e38)
+  - `src/pipeline/{types,pipeline,primitives}.ts` shared infrastructure
+  - 5 profiles: `x` / `wechat` / `xhs` / `zhihu` / `generic` (Mozilla Readability)
+  - Generic profile injected on demand via `chrome.scripting.executeScript`
+  - Unified `ArticleData` type with optional `tags` / `location` / `site` / `siteHandle`
+  - `ContentType` widened: `note` / `video` / `answer` added
+  - Replaces the previous `src/content/platforms/x/{detector,extractor}.ts` (978 LOC) with a single 700-LOC X profile
+- **Lope agent layer** (separate session)
+  - `find-lope` skill (Claude Code) — gated on `~/Lope/INDEX.md` existing
+  - `/lope-refresh` slash command + `~/.lope/sync.py` — Notion → local pile
+  - 6 saves enriched, INDEX built; cross-session recall live
+- **Rebrand to Lope** — name / copy / Notion DB title / package / manifest. OAuth Worker URL stays on the legacy subdomain pending an ops migration.
 
 ---
 
-## Upcoming
+## Active
 
-### v1.3 — Thread Edge Cases (if needed)
-- [ ] Thread detection: reply chains vs self-threads — fix only if reported as broken in real use
+### Lope deferred items (next time touching Lope)
+- [ ] Rotate Notion token (exposed in 2026-04-26 transcript; user opted ship-now-rotate-later)
+- [ ] `sync.py` nit 1: `type_.lower()` in compares (Thread / Quote Tweet vs lowercase)
+- [ ] `sync.py` nit 2: Author should be handle, not display name (parse from URL `/{handle}/`)
 
----
-
-## v2.0 — Rebrand + Lark Destination
-
-### Rebrand
-- [ ] Rename extension from "X2Notion" → "Engram"
-- [ ] Update manifest, UI copy, store listing
-
----
-
-### New destination in v2.0
-- [ ] **Lark / Feishu** — OAuth flow, `destinations/lark.ts`, Chinese-locale UI copy
+### v1.3 ship items
+- [ ] Update Chrome Web Store listing copy (Lope name, multi-platform tagline, scripting permission rationale)
+- [ ] Resubmit to Web Store (was v1.2 in review; v1.3 is a meaningful re-review)
+- [ ] Lope visual identity — monochrome icon set (16/32/48/128). Currently still using v1.2 icons.
 
 ---
 
-## v2.1 — First New Source: Substack
+## Next: M2 — Reflex Save UX (1 week CC)
+
+- `Cmd+Shift+S` → toast → done. No popup form on the default path.
+- Popup retains form for the 5% case where user wants to override category / tags at save-time.
+- Five platforms share one save flow; no platform-specific UX.
+- Self-dogfood ≥5 saves/day for 7 days.
+
+Ships as v1.4 internal.
 
 ---
 
-## v2.2 — Medium + Reddit
-**Goal:** Prove the multi-source architecture with the highest-value external platform.
+## Then: M3.x — Pile architecture evolution
 
-Substack articles are clean HTML — easiest extraction after X Articles.
+The Lope skill + `~/Lope/` pile is live but currently *derived* from Notion via `sync.py`. The medium-term direction is to make Lope the canonical source of truth, with Notion / Obsidian as fan-out destinations.
 
-- [ ] `content-substack.ts` content script
-- [ ] Match `https://*.substack.com/p/*`
-- [ ] Reuse existing `ArticleData` type and background pipeline unchanged
-- [ ] `Type=Article`, `Source=Substack` property in Notion
+- [ ] **Lope-direct write path** — extension writes to `~/Lope/` directly via Native Messaging Host or local HTTP server (similar to Obsidian Local REST API pattern). Notion + Obsidian remain optional mirrors.
+- [ ] **Notion schema migration** — auto-add `Site` / `Tags` / `Location` / `Source` properties on first v1.3+ save, gated by `dbProps.has(...)` guards already in place.
+- [ ] **Per-source frontmatter** — XHS notes (short, image-heavy) vs Zhihu articles (long, code blocks) vs X threads (sequential) shape different YAML defaults.
+- [ ] **OAuth Worker rename** — deploy at `lope-oauth.<account>.workers.dev`, update Notion integration callback, drop the legacy x2notion-oauth subdomain.
 
-### Architecture changes for multi-source
-```json
-"content_scripts": [
-  { "matches": ["https://x.com/*"], "js": ["content-x.js"] },
-  { "matches": ["https://*.substack.com/*"], "js": ["content-substack.js"] }
-]
-```
+Ships as v1.5 internal.
 
 ---
 
-## v3.0 — Platform Suite
+## Future: M4 — MCP transport (gated on external users)
 
-### Sources
-- [ ] **Medium** — similar to Substack, clean article HTML
-- [ ] **Reddit** — post + top-level comments (not full comment tree); `Type=RedditThread`
-- [ ] **YouTube** — title, description, transcript via `/api/timedtext`; `Type=Video`
-- [ ] **LinkedIn** — articles and posts (DOM extraction, no official API)
+The `find-lope` skill works in Claude Code only. To reach Cursor / Cline / other MCP clients, ship an MCP server (stdio + ripgrep, ~6 tools). Defer until ≥5 external users want it; for personal infra the skill is sufficient.
+
+- [ ] `kb_search`, `kb_recent`, `kb_topic`, `kb_get`, `kb_related`, `kb_topics` — MCP tools
+- [ ] Source-typed retrieval (`kb_search source=zhihu` etc.)
+- [ ] Setup CLI: `npx lope-mcp setup --vault ~/Lope/`
+
+Ships as v2.0.
+
+---
+
+## Future: more sources / destinations
+
+### Sources (one profile each)
+- [ ] **Substack** — covered by generic profile today; could add a dedicated profile if quality matters
+- [ ] **Medium** — same
+- [ ] **Reddit** — post + top-level comments
+- [ ] **YouTube** — title + description + transcript via `/api/timedtext`
+- [ ] **LinkedIn** — articles and posts (DOM only, no official API)
 
 ### Destinations
-- [ ] **Logseq** — similar to Obsidian, Markdown-based
+- [ ] **Lope-direct** (M3.x above) — local files as canonical
+- [ ] **Logseq** — Markdown-based, similar to Obsidian
 - [ ] **Readwise** — highlights and articles API
+- [ ] **Lark / Feishu** — OAuth, Chinese-locale UI copy (deferred from earlier roadmap)
 
 ---
 
@@ -103,13 +122,14 @@ All features are evaluated against these before implementation. Full details in 
 1. **Structured properties > body-embedded metadata** — agents filter by properties, not full-text search
 2. **Consistent schema** — every saved item has the same property structure; auto-migrate on first save
 3. **Agent-parseable markers** — `**n/total**` for threads, `[Video]` for video assets
-4. **Zero noise** — UI chrome, engagement counts, timestamps never reach Notion
-5. **Typed pipeline** — all content flows through `ArticleBlock` union; no bespoke API calls
+4. **Zero noise** — UI chrome, engagement counts, timestamps never reach the pile
+5. **Typed pipeline** — all content flows through `ArticleBlock` union; no bespoke API calls per platform
+6. **Recall is the magic** — save should be near-zero friction; the agent does the re-reading
 
 ---
 
 ## Open Questions
 
-- **Obsidian sync model**: Local REST API requires the user to install a plugin and run Obsidian. Is that acceptable friction for the target user (power users who already use Obsidian)?
-- **YouTube transcript**: Available for videos with captions. For videos without captions, fall back to title + description only, or skip?
-- **Source property**: When multi-source lands, add `Source` (select: X, Substack, Medium, Reddit, YouTube) to Notion schema. Needs schema migration for existing databases.
+- **Lope-direct write transport**: Native Messaging Host (Python helper installed via post-install script) vs local HTTP server (similar to Obsidian Local REST API plugin). Trade-off is install friction vs cross-platform reliability.
+- **External-user gating**: at what user count does MCP transport become worth the maintenance? Current floor is "≥5 daily users for ≥2 weeks", per the design doc.
+- **Visual identity**: monochrome icon set TBD. Locked: name (Lope), no purple, no decorative motifs.

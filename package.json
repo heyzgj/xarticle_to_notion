@@ -1,13 +1,13 @@
 {
-  "name": "x2notion",
-  "version": "1.0.0",
-  "description": "Chrome extension that saves X (Twitter) Articles to Notion in one click",
+  "name": "lope",
+  "version": "1.3.0",
+  "description": "Chrome extension that saves the web (X / WeChat / Xiaohongshu / Zhihu / generic articles) to your agent's memory.",
   "private": true,
   "scripts": {
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production",
     "typecheck": "tsc --noEmit",
-    "package": "npm run typecheck && npm run build && cd dist && zip -r ../x2notion.zip . -x '*.DS_Store' && cd .. && echo '\\n✓ Packaged: x2notion.zip'"
+    "package": "npm run typecheck && npm run build && cd dist && zip -r ../lope.zip . -x '*.DS_Store' && cd .. && echo '\\n✓ Packaged: lope.zip'"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.287",

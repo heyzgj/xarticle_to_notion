@@ -1,34 +1,34 @@
 # Chrome Web Store Listing Copy
 
-Ready-to-paste text for the Chrome Web Store submission form.
+Ready-to-paste text for the Chrome Web Store submission form. Update for v1.3 (Lope rebrand + multi-platform).
 
 ---
 
 ## Name (max 45 chars)
 
 ```
-X2Notion — Save X Articles to Notion
+Lope — Save now, your agent reads later
 ```
 
-(35 chars — leaves room if you want to add a tagline)
+(40 chars)
 
 Alt options:
-- `X2Notion: Save X Articles to Notion`
-- `X2Notion — Clip X Articles to Notion`
+- `Lope: Save the web to your AI's memory` (39)
+- `Lope — Web clipper for AI agents` (32)
 
 ---
 
 ## Short description (max 132 chars)
 
 ```
-Save X articles, threads, and tweets to Notion or Obsidian in one click. Clean structure, agent-ready, zero setup friction.
+Save now. Your agent reads later. Clip X, WeChat, Xiaohongshu, Zhihu, and any article to your AI's memory.
 ```
 
-(126 chars)
+(108 chars)
 
 Alt options:
-- `Clip X long-form Articles, threads, and tweets to Notion or Obsidian. One click. Clean structure. Agent-ready.` (110)
-- `Save X content to Notion or Obsidian in one click. OAuth for Notion, local REST API for Obsidian. No copy-paste.` (111)
+- `One-click web clipper for AI agents. Save X / WeChat / Xiaohongshu / Zhihu / any article to Notion or Obsidian.` (110)
+- `Curate the web for your AI. Save articles, threads, and notes to a structured pile your agent reads later.` (107)
 
 ---
 
@@ -42,26 +42,26 @@ Alt options:
 
 ## Language
 
-English
+English (with Chinese platform support)
 
 ---
 
 ## Detailed description (max 16,000 chars — use ~1500)
 
 ```
-Save anything you read on X to your knowledge base with a single click — Articles, threads, single tweets, and quote tweets. Pick Notion or Obsidian as your destination (or both).
+Save anything you read on the web to a structured pile your AI agent can actually use — X articles, X threads, single tweets, quote tweets, WeChat 公众号 articles, Xiaohongshu notes (with images, tags, and location), Zhihu articles and answers, plus any Readability-friendly article on any other site.
 
-X2Notion is for people who treat X as where the real conversation happens, and want their saved posts somewhere they can actually find them — and feed them to their personal AI agent — later. Instead of bookmarking an article into a graveyard, send it straight to a structured database with title, author, date, full text, images, and video links preserved.
+Lope is for people who run a personal AI agent (Claude Code, OpenClaw, Hermes, custom MCP setup) and want their saved reading to feed that agent's memory. Instead of bookmarking into a graveyard, send everything you read straight to a structured database with title, author, published date, full text, images, tags, and location preserved — formatted so the agent can parse it, not just humans.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHAT IT SAVES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✦ Long-form X Articles — full structure, headings, lists, links
-✦ Threads — auto-detected, numbered (n/total format), each tweet on its own block
-✦ Single tweets — when one tweet is enough
-✦ Quote tweets — outer tweet + the quoted tweet preserved as nested context
-✦ Videos — poster thumbnail + link back to the original tweet (no rehosting)
+✦ X (Twitter) — long-form Articles, threads (numbered n/total), single tweets, quote tweets, video posters
+✦ WeChat 公众号 — full article body, author, published date, all images
+✦ Xiaohongshu (小红书) — note title, body, image gallery, hashtags, IP location
+✦ Zhihu (知乎) — articles and answers from zhuanlan.zhihu.com or question pages
+✦ Anywhere else — Mozilla Readability fallback for blogs, Substack, HN, Medium, etc.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHERE IT SAVES
@@ -69,21 +69,21 @@ WHERE IT SAVES
 
 ✦ Notion — connect with OAuth, pick a database, done. Or let us create one for you.
 ✦ Obsidian — local-first via the Obsidian Local REST API plugin. Markdown files with YAML frontmatter (Dataview-ready).
-✦ Both at once — save to Notion AND Obsidian simultaneously if you want.
+✦ Both at once — fan out simultaneously.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHAT MAKES IT DIFFERENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✦ One-click save. See the content. Click the icon (or press Cmd/Ctrl+Shift+S). Done.
+✦ One-click save (or Cmd/Ctrl+Shift+S). See the content, click, done.
 
 ✦ No API keys for Notion. Connect with the official OAuth flow and pick your database from a dropdown.
 
-✦ Agent-ready structure. Saved content uses consistent properties (Type, Source, TweetCount) and parse-safe markers — designed to be readable by AI agents, not just humans.
+✦ Five platform-specific extractors. Each one is hand-built for its platform's quirks — WeChat's lazy-loaded images, Xiaohongshu's structured JSON state, Zhihu's semantic-meta tags, X's thread/quote-tweet logic. The generic Readability fallback handles everything else.
 
-✦ Duplicate detection. If a URL is already saved, you get one click to open the existing entry instead of creating a copy.
+✦ Agent-ready structure. Saved content uses consistent properties (Type, Source, Author, Published) and parse-safe markers — designed to be readable by AI agents, not just humans.
 
-✦ Premium UI. Compact polished popup, inline save states, real welcome flow.
+✦ Duplicate detection. If a URL is already saved, you get one click to open the existing entry.
 
 ✦ Private by design. Your tokens stay in your browser. We don't run servers that see your data. Zero analytics. Zero telemetry.
 
@@ -93,19 +93,19 @@ HOW IT WORKS
 
 1. Install the extension. A welcome tab opens.
 2. Connect to Notion (OAuth) and/or Obsidian (paste your Local REST API key).
-3. Visit any X article, thread, tweet, or quote tweet. Click the extension icon. Hit Save.
+3. Visit any supported page. Click the extension icon (or press Cmd/Ctrl+Shift+S). Hit Save.
 
 Your saved content appears in your destination(s) with:
-• Title (from the content)
-• Author name + @handle
+• Title
+• Author + handle (where the platform exposes one)
 • Published date
 • Full structured content with formatting
 • Images
-• Video links (when present)
+• Tags + location (Xiaohongshu)
+• Type (Article / Thread / Tweet / Quote Tweet / Note / Video / Answer)
+• Source (X / WeChat / Xiaohongshu / Zhihu / generic)
+• Tweet count (threads)
 • Source URL
-• Type (Article / Thread / Tweet / Quote Tweet)
-• Tweet count (for threads)
-• Optional category and tags you chose
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PERMISSIONS — WHY
@@ -114,7 +114,8 @@ PERMISSIONS — WHY
 • Storage — remember your Notion connection and (optional) Obsidian credentials locally
 • Active tab — read the content you're currently viewing when you click the icon
 • Tabs — open your saved page after save
-• x.com / twitter.com — detect and extract content
+• Scripting — inject the generic Readability extractor on demand when you save from a non-platform site (only fires on click; never auto-runs across pages)
+• x.com / twitter.com / mp.weixin.qq.com / xiaohongshu.com / zhihu.com — detect and extract content
 • api.notion.com — send content to Notion (only if you save to Notion)
 • 127.0.0.1:27124 / 27123 — send content to your local Obsidian (only if you save to Obsidian; stays on your machine)
 
@@ -139,31 +140,31 @@ Found a bug? Have a feature idea? Open an issue at github.com/heyzgj/xarticle_to
 
 Chrome Web Store requires 1280×800 or 640×400 PNG/JPG. Provide at least 1, ideally 3-5.
 
-Recommended shots:
+Recommended shots for v1.3:
 
-1. **Hero** — Popup open on a real X Article, showing the preview card with the article title, author avatar, and big blue "Save to Notion" button
-2. **Save success** — Popup after save, showing the green "Open in Notion" button
-3. **Welcome tab** — The onboarding screen with "Connect to Notion" CTA and privacy line
-4. **Database choice** — The "Create X2Notion for me" recommended card
-5. **Notion result** — The saved article inside Notion (showing clean formatting)
-
-Use a browser window screenshot tool. For the popup, right-click the extension icon → Inspect popup → DevTools device toolbar → set to 1280×800 → fill background.
+1. **Hero** — Popup open on a real X article, showing preview card and big "Save" button
+2. **Multi-platform** — Side-by-side: same Save flow on WeChat / Xiaohongshu / Zhihu (one composite image)
+3. **Save success** — Popup after save, showing the green "Open in Notion" button
+4. **Welcome tab** — Onboarding with "Connect to Notion" CTA and privacy line
+5. **Database choice** — The "Create Lope for me" recommended card
+6. **Notion result** — A saved Xiaohongshu note inside Notion showing tags + location properties
 
 ---
 
 ## Promotional tile (optional, recommended)
 
-440×280 PNG. A minimal composition:
-- Dark background (#111827 to match your icon)
-- Your owl icon at 96×96
-- Text: "X2Notion" in large white sans, "Save X Articles to Notion" in smaller gray below
+440×280 PNG. Lope visual identity is monochrome — stay away from purple. Suggested:
+- Black or near-black background
+- Lope wordmark in large white sans
+- Tagline below in muted gray: "Save now. Your agent reads later."
+- No icons / illustrations until the icon-redesign pass lands
 
 ---
 
 ## Category tags (max 5)
 
 ```
-notion, obsidian, twitter, x, knowledge-base
+notion, obsidian, knowledge-base, ai-agent, web-clipper
 ```
 
 ---
@@ -180,63 +181,19 @@ The email tied to your developer account.
 https://github.com/heyzgj/xarticle_to_notion
 ```
 
+(GitHub repo rename to `lope` is a deferred ops task — link stability matters more.)
+
 ---
 
 ## Privacy policy URL
 
-Host `PRIVACY.md` somewhere public. Options:
-- GitHub: push the file, use `https://github.com/heyzgj/xarticle_to_notion/blob/main/PRIVACY.md`
-- GitHub Pages: enable Pages on the repo and use `https://heyzgj.github.io/xarticle_to_notion/PRIVACY.html`
-- Your own domain if you have one
+Host `PRIVACY.md` somewhere public. Current:
+- `https://raw.githubusercontent.com/heyzgj/xarticle_to_notion/main/PRIVACY.md`
 
 ---
 
 ## Single purpose description (Chrome Web Store asks)
 
 ```
-X2Notion has one purpose: saving content from X (Twitter) — long-form Articles, threads, single tweets, and quote tweets — to a user's personal knowledge base. The user picks Notion (via OAuth) or a local Obsidian vault (via the Local REST API plugin) as their destination. When the user clicks the extension icon on an X page, the extension reads the content from the current tab and sends it directly to the configured destination using credentials stored locally in the user's browser.
-```
-
----
-
-## Permission justifications (Chrome Web Store asks for each permission)
-
-### `storage`
-```
-Used to store the user's Notion OAuth access token, selected database ID, and a single UI preference flag in the browser's local storage. No data is transmitted anywhere.
-```
-
-### `activeTab`
-```
-When the user clicks the extension icon on an X Article, activeTab grants temporary access to the current tab so the content script can read the article's text, title, author, and images for saving to Notion.
-```
-
-### `tabs`
-```
-Used to open the welcome page on first install and to open the saved article's Notion page in a new tab after a successful save.
-```
-
-### Host permission `https://api.notion.com/*`
-```
-Required to send the extracted content to the user's Notion workspace via the Notion REST API. Used only when the user has chosen Notion as their destination.
-```
-
-### Host permissions `https://127.0.0.1:27124/*` and `http://127.0.0.1:27123/*`
-```
-Required to send content to the user's local Obsidian vault via the Obsidian Local REST API plugin (https://github.com/coddingtonbear/obsidian-local-rest-api). Used only when the user has chosen Obsidian as their destination. Both endpoints are loopback-only and never leave the user's machine.
-```
-
-### Content scripts on `x.com` and `twitter.com`
-```
-The content script detects what type of X content the page contains (long-form Article, thread, single tweet, or quote tweet) and extracts the structured content (title, author, text, images, video poster URLs, formatting, links) when the user explicitly clicks Save.
-```
-
-### `commands._execute_action` (keyboard shortcut)
-```
-Provides Cmd+Shift+S (Mac) / Ctrl+Shift+S (Windows/Linux) as a keyboard shortcut to open the extension popup, so users can save without reaching for the mouse.
-```
-
-### `web_accessible_resources` — `welcome.html`
-```
-The onboarding tab needs to be reachable via chrome-extension:// URL because Notion's OAuth flow redirects back to it after the user grants access.
+Lope has one purpose: saving content from the web — primarily X (Twitter) articles/threads/tweets, WeChat 公众号 articles, Xiaohongshu notes, Zhihu articles/answers, and any other Readability-compatible article — to a user's personal knowledge base. The user picks Notion (via OAuth) or a local Obsidian vault (via the Local REST API plugin) as their destination. When the user invokes the extension on a supported page, it reads the content from the current tab and sends it directly to the configured destination using credentials stored locally in the user's browser.
 ```

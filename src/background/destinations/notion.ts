@@ -380,7 +380,7 @@ function splitRichTextBlocks(
 
 // --- Database creation ---
 
-export async function createX2NotionDatabase(token: string): Promise<{ id: string; parentPageName: string }> {
+export async function createLopeDatabase(token: string): Promise<{ id: string; parentPageName: string }> {
   const searchResult = await notionFetch('/search', 'POST', {
     filter: { value: 'page', property: 'object' },
     page_size: 1,
@@ -393,7 +393,7 @@ export async function createX2NotionDatabase(token: string): Promise<{ id: strin
 
   const result = await notionFetch('/databases', 'POST', {
     parent: { type: 'page_id', page_id: parentPage.id },
-    title: [{ type: 'text', text: { content: 'X2Notion' } }],
+    title: [{ type: 'text', text: { content: 'Lope' } }],
     properties: {
       Title: { title: {} },
       URL: { url: {} },
