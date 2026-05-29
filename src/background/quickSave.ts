@@ -1,6 +1,7 @@
 import type { ArticleData } from '../types/article';
 import type { Message, ToastKind } from '../types/messages';
 import { handleMessage } from './messageHandler';
+import { articleToMarkdown } from '../utils/markdown';
 
 /**
  * Reflex save orchestrator (M2). Bound to the `quick-save` chrome command —
@@ -64,7 +65,11 @@ async function runQuickSaveInner(): Promise<void> {
 
   if (saveResult.type === 'SAVE_RESULT' && saveResult.success) {
     const text = saveResult.duplicate ? 'Already saved' : 'Saved';
-    await showToast(tabId, text, 'success', saveResult.pageUrl);
+    // Envelope = YAML frontmatter (title/url/notion_url/...) + markdown body
+    // with `![alt](url)` for images intact. Agent on the receiving end pastes
+    // it and reads everything in one go — no Notion connector dance needed.
+    const clipboardText = articleToMarkdown(article, { notionUrl: saveResult.pageUrl });
+    await showToast(tabId, text, 'success', clipboardText);
     return;
   }
   const error =
@@ -98,7 +103,7 @@ async function showToast(
   tabId: number,
   text: string,
   kind: ToastKind,
-  actionUrl?: string,
+  clipboardText?: string,
 ): Promise<void> {
   // content-toast.js self-guards against double-listener registration via
   // window.__lopeToastLoaded, so re-running executeScript on the same tab is safe.
@@ -108,7 +113,7 @@ async function showToast(
     return; // Cannot inject (protected URL slipped through, tab closed, etc.) — silent.
   }
   try {
-    await chrome.tabs.sendMessage(tabId, { type: 'SHOW_TOAST', text, kind, actionUrl });
+    await chrome.tabs.sendMessage(tabId, { type: 'SHOW_TOAST', text, kind, clipboardText });
   } catch {
     // Listener didn't register or tab closed — silent.
   }

@@ -2,7 +2,8 @@ import './popup.css';
 import type { Message } from '../types/messages';
 import type { ArticleData } from '../types/article';
 import { getFormExpanded, setFormExpanded } from '../utils/storage';
-import { OAUTH_WORKER_URL } from '../utils/constants';
+import { buildOAuthUrl } from '../utils/oauth';
+import { articleToMarkdown } from '../utils/markdown';
 
 const states = {
   unconfigured: document.getElementById('state-unconfigured')!,
@@ -26,12 +27,36 @@ const btnCancelCategory = document.getElementById('btn-cancel-category')!;
 const tagsInput = document.getElementById('tags-input') as HTMLInputElement;
 
 const actionArea = document.getElementById('action-area')!;
-const btnSave = document.getElementById('btn-save')!;
+const btnCopy = document.getElementById('btn-copy') as HTMLButtonElement;
+const btnSave = document.getElementById('btn-save') as HTMLButtonElement;
 const inlineError = document.getElementById('inline-error')!;
 const errorMessage = document.getElementById('error-message')!;
 
+// Inline line-icons — stroke uses currentColor so they invert correctly
+// between the ink (white) and outline (dark) buttons. 15px on a 16 grid.
+const ICON_COPY = '<svg class="act-ico" width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="5.6" y="5.6" width="7.9" height="7.9" rx="1.9" stroke="currentColor" stroke-width="1.5"/><path d="M10.4 5.6V4.3A1.8 1.8 0 0 0 8.6 2.5H4.3A1.8 1.8 0 0 0 2.5 4.3v4.3a1.8 1.8 0 0 0 1.8 1.8h1.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+const ICON_CHECK = '<svg class="act-ico" width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8.4 6.2 11.5 13 4.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_SAVE = '<svg class="act-ico" width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 2.6v6.3m0 0 2.4-2.4M8 8.9 5.6 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 11.2v.6a1.6 1.6 0 0 0 1.6 1.6h6.8a1.6 1.6 0 0 0 1.6-1.6v-.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+const ICON_OPEN = '<svg class="act-ico" width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8.2 3H4.6A1.6 1.6 0 0 0 3 4.6v6.8A1.6 1.6 0 0 0 4.6 13h6.8A1.6 1.6 0 0 0 13 11.4V7.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 2.6h3.4V6M13.2 2.8 7.6 8.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SPINNER = '<span class="act-spin"></span>';
+
 let saveState: 'idle' | 'saving' | 'saved' = 'idle';
 let savedPageUrl: string | null = null;
+let copyResetTimer: number | null = null;
+
+async function writeClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function showSaveError(error?: string) {
+  errorMessage.textContent = error ?? 'Could not save. Check your connection and try again.';
+  inlineError.hidden = false;
+}
 
 const btnSettings = document.getElementById('btn-settings')!;
 const btnConnect = document.getElementById('btn-connect');
@@ -96,9 +121,11 @@ function hashString(str: string): number {
   return Math.abs(hash);
 }
 
+// Warm earth tones only — no blue/purple/cyan (off-brand), no amber (reserved
+// for the save moment). Keeps author initials distinguishable, stays on-system.
 const AVATAR_COLORS = [
-  '#F87171', '#FB923C', '#FBBF24', '#34D399',
-  '#22D3EE', '#60A5FA', '#A78BFA', '#F472B6',
+  '#B5683C', '#9C5A3C', '#A6743E', '#8C6A3F',
+  '#7E6248', '#B0784E', '#8A5A44', '#6E5B43',
 ];
 
 function getAvatarColor(name: string): string {
@@ -198,15 +225,33 @@ function setFormDisabled(disabled: boolean) {
   formEls.forEach(el => el.classList.toggle('form-disabled', disabled));
 }
 
+// Copy — clipboard only, no Notion write. The fast grab: paste straight into
+// an AI tool. Confirms with a transient "Copied" that settles back to "Copy".
+btnCopy.addEventListener('click', async () => {
+  if (!currentArticle) return;
+
+  const envelope = articleToMarkdown(currentArticle);
+  const ok = await writeClipboard(envelope);
+
+  btnCopy.innerHTML = ok ? `${ICON_CHECK} Copied` : `${ICON_COPY} Try again`;
+  btnCopy.classList.toggle('is-done', ok);
+
+  if (copyResetTimer !== null) clearTimeout(copyResetTimer);
+  copyResetTimer = window.setTimeout(() => {
+    btnCopy.innerHTML = `${ICON_COPY} Copy`;
+    btnCopy.classList.remove('is-done');
+  }, 1600);
+});
+
+// Save to Notion — the committal action. Persists, then the button turns into
+// "Open in Notion".
 btnSave.addEventListener('click', async () => {
-  // If already saved, clicking opens the Notion page
   if (saveState === 'saved' && savedPageUrl) {
     chrome.tabs.create({ url: savedPageUrl });
     window.close();
     return;
   }
-  if (saveState === 'saving') return;
-  if (!currentArticle) return;
+  if (saveState === 'saving' || !currentArticle) return;
 
   const category = categorySelect.value === '__new__' ? '' : categorySelect.value;
   const tags = tagsInput.value
@@ -215,10 +260,10 @@ btnSave.addEventListener('click', async () => {
     .filter(Boolean);
 
   inlineError.hidden = true;
-  setFormDisabled(true);
   saveState = 'saving';
-  btnSave.innerHTML = '<div class="spinner"></div> Saving...';
-  btnSave.classList.add('btn-saving');
+  btnSave.disabled = true;
+  btnSave.classList.add('is-loading');
+  btnSave.innerHTML = `${SPINNER} Saving…`;
 
   const result = await sendMessage({
     type: 'SAVE_TO_NOTION',
@@ -227,22 +272,18 @@ btnSave.addEventListener('click', async () => {
     tags,
   });
 
+  btnSave.disabled = false;
+  btnSave.classList.remove('is-loading');
+
   if (result.type === 'SAVE_RESULT' && result.success && result.pageUrl) {
     saveState = 'saved';
     savedPageUrl = result.pageUrl;
-    const label = result.duplicate
-      ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Already saved — open'
-      : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Open in Notion';
-    btnSave.innerHTML = label;
-    btnSave.classList.remove('btn-saving');
-    btnSave.classList.add('btn-success');
+    setFormDisabled(true);
+    btnSave.innerHTML = `${ICON_OPEN} Open in Notion`;
   } else {
     saveState = 'idle';
-    setFormDisabled(false);
-    btnSave.textContent = 'Save to Notion';
-    btnSave.classList.remove('btn-saving');
-    errorMessage.textContent = (result.type === 'SAVE_RESULT' && result.error) ? result.error : 'Could not save. Check your connection and try again.';
-    inlineError.hidden = false;
+    btnSave.innerHTML = `${ICON_SAVE} Save to Notion`;
+    showSaveError(result.type === 'SAVE_RESULT' ? result.error : undefined);
   }
 });
 
@@ -250,9 +291,8 @@ btnSettings.addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
 });
 
-btnConnect?.addEventListener('click', () => {
-  const extensionId = chrome.runtime.id;
-  chrome.tabs.create({ url: `${OAUTH_WORKER_URL}/auth?extension_id=${extensionId}` });
+btnConnect?.addEventListener('click', async () => {
+  chrome.tabs.create({ url: await buildOAuthUrl() });
 });
 
 async function init() {

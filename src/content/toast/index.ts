@@ -59,9 +59,37 @@ if (!window.__lopeToastLoaded) {
     dismissTimer = window.setTimeout(dismiss, ms);
   }
 
-  function render(text: string, kind: ToastKind, actionUrl: string | undefined): void {
+  function copyToClipboard(text: string): boolean {
+    // Legacy textarea + execCommand('copy') — synchronous and works in
+    // content scripts on focused pages without needing the user-gesture
+    // propagation that navigator.clipboard.writeText() requires. Toast is
+    // rendered after a Chrome-command gesture, which doesn't always cleanly
+    // attach to async clipboard.writeText from a content-script context.
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+
+  function render(text: string, kind: ToastKind, clipboardText: string | undefined): void {
     const shadow = ensureShadow();
     shadow.innerHTML = '';
+
+    let displayText = text;
+    if (clipboardText && kind === 'success') {
+      displayText = copyToClipboard(clipboardText) ? `${text} · Copied` : text;
+    }
 
     const style = document.createElement('style');
     style.textContent = `
@@ -73,12 +101,12 @@ if (!window.__lopeToastLoaded) {
         gap: 10px;
         max-width: 320px;
         padding: 10px 14px;
-        background: #111;
-        color: #f5f5f5;
-        border-radius: 8px;
-        font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        background: #1A1916;
+        color: #F3F1EA;
+        border-radius: 12px;
+        font: 13px/1.4 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
         letter-spacing: 0.01em;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.04) inset;
+        box-shadow: 0 8px 24px rgba(26,25,22,0.24), 0 1px 0 rgba(255,255,255,0.05) inset;
         animation: lope-toast-in 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
       }
       .dot {
@@ -88,28 +116,18 @@ if (!window.__lopeToastLoaded) {
         flex-shrink: 0;
       }
       .dot.pending {
-        background: #777;
+        background: #D98A2B;
         animation: lope-toast-pulse 1.2s ease-in-out infinite;
       }
-      .dot.info { background: #888; }
-      .dot.success { background: #d4d4d4; }
-      .dot.error { background: #b85c5c; }
+      .dot.info { background: #8C867A; }
+      .dot.success { background: #D98A2B; }
+      .dot.error { background: #C0492F; }
       .text {
         flex: 1;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .action {
-        color: #d4d4d4;
-        cursor: pointer;
-        text-decoration: underline;
-        text-decoration-color: #555;
-        text-underline-offset: 2px;
-        white-space: nowrap;
-        flex-shrink: 0;
-      }
-      .action:hover { color: #fff; text-decoration-color: #999; }
       @keyframes lope-toast-in {
         from { opacity: 0; transform: translateY(-6px); }
         to   { opacity: 1; transform: none; }
@@ -132,18 +150,8 @@ if (!window.__lopeToastLoaded) {
 
     const textEl = document.createElement('span');
     textEl.className = 'text';
-    textEl.textContent = text;
+    textEl.textContent = displayText;
     toast.appendChild(textEl);
-
-    if (actionUrl) {
-      const action = document.createElement('span');
-      action.className = 'action';
-      action.textContent = 'Open';
-      action.addEventListener('click', () => {
-        window.open(actionUrl, '_blank', 'noopener,noreferrer');
-      });
-      toast.appendChild(action);
-    }
 
     shadow.appendChild(toast);
     scheduleDismiss(kind);
@@ -151,7 +159,7 @@ if (!window.__lopeToastLoaded) {
 
   chrome.runtime.onMessage.addListener((message: Message) => {
     if (message.type !== 'SHOW_TOAST') return;
-    render(message.text, message.kind ?? 'info', message.actionUrl);
+    render(message.text, message.kind ?? 'info', message.clipboardText);
     // No response needed — fire-and-forget from background.
   });
 }

@@ -1,9 +1,13 @@
 import type { ArticleData, ArticleBlock, RichTextSegment } from '../types/article';
 
 // Converts ArticleData to Markdown with YAML frontmatter.
-// Used by the Obsidian destination adapter.
+// Used by the Obsidian destination adapter and the clipboard envelope
+// (post-save hand-off to AI agents — the markdown body is the payload).
 
-export function articleToMarkdown(article: ArticleData): string {
+export function articleToMarkdown(
+  article: ArticleData,
+  opts?: { notionUrl?: string }
+): string {
   const date = new Date().toISOString().split('T')[0];
   const published = article.publishedDate.split('T')[0];
   const tags = ['lope', article.source, article.contentType];
@@ -17,6 +21,7 @@ export function articleToMarkdown(article: ArticleData): string {
     `source: ${article.source}`,
     `type: ${article.contentType}`,
     `url: ${article.url}`,
+    opts?.notionUrl ? `notion_url: ${opts.notionUrl}` : null,
     `published: ${published}`,
     `saved: ${date}`,
     article.tweetCount != null ? `tweet_count: ${article.tweetCount}` : null,
@@ -68,13 +73,25 @@ function blockToMarkdown(block: ArticleBlock): string {
   }
 }
 
+function isSafeHref(href: string): boolean {
+  try {
+    const u = new URL(href);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function richTextToMarkdown(segments: RichTextSegment[]): string {
   return segments.map(seg => {
     let text = seg.text;
     if (seg.bold)      text = `**${text}**`;
     if (seg.italic)    text = `*${text}*`;
     if (seg.underline) text = `<u>${text}</u>`;
-    if (seg.href)      text = `[${text}](${seg.href})`;
+    // Only emit http(s) links. A page-supplied javascript:/data: href would
+    // otherwise become a click-executable link once pasted into an AI chat or
+    // Obsidian — gate it the same way the Notion path does.
+    if (seg.href && isSafeHref(seg.href)) text = `[${text}](${seg.href})`;
     return text;
   }).join('');
 }
