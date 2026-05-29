@@ -1,8 +1,8 @@
 # Privacy Policy — Lope
 
-**Last updated: 2026-04-27**
+**Last updated: 2026-05-29**
 
-Lope ("the extension") is a Chrome extension that saves web content — X (Twitter) articles, threads, tweets, and quote tweets; WeChat 公众号 articles; Xiaohongshu notes; Zhihu articles and answers; and any Readability-friendly article on any other site — to your personal Notion workspace or local Obsidian vault. This policy explains what the extension does with your data — in plain English.
+Lope ("the extension") is a Chrome extension that saves web content — X (Twitter) articles, threads, tweets, and quote tweets; WeChat 公众号 articles; Xiaohongshu notes; Zhihu articles and answers; and any Readability-friendly article on any other site — to your personal Notion workspace, your local Obsidian vault, or your clipboard (as a Markdown export you paste into an AI chat). This policy explains what the extension does with your data — in plain English.
 
 ## TL;DR
 
@@ -26,6 +26,9 @@ If you choose to save to a local Obsidian vault, the extension stores the API ke
 
 ### 5. Local preferences
 A single boolean flag remembering whether you want the "category & tags" form expanded by default. Stored in `chrome.storage.local`.
+
+### 6. Clipboard (Copy / reflex save)
+When you use **Copy** or the reflex shortcut (Cmd/Ctrl+Shift+S), the extension writes the extracted content — a Markdown "envelope" of the page — to your system clipboard so you can paste it into an AI chat. This is a local browser action: the data goes to your clipboard and nowhere else. The extension never reads your clipboard.
 
 ## What data the extension does NOT handle
 

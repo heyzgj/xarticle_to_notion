@@ -3,12 +3,18 @@
 > 开一个新 session / 周一早上回来看——先读这个文件。
 > 目标：30 秒内知道"现在在哪 / 下一步是什么 / 谁在等谁"。
 
-**Last updated**: 2026-04-27
+**Last updated**: 2026-05-29
 
 ---
 
 ## 🚢 刚 shipped
 
+- **v1.4 — Agent hand-off + 视觉 rebrand + 安全**（2026-05-29，本 session，未 commit）
+  - **Clipboard envelope**：save 后把 markdown envelope（YAML frontmatter + body + 图片 ref + `notion_url`）写剪贴板，直接粘进 Claude/ChatGPT/Codex，无需 Notion connector。Popup 拆成 **Copy**（只复制不存）+ **Save to Notion**（存+开）两个 verb；reflex `Cmd+Shift+S` = save+copy+toast `Saved · Copied`。见 `memory/clipboard-envelope-handoff.md`。
+  - **Soft Bloom 视觉系统**：杀掉 Twitter-blue，全面换暖色 ink/paper + amber（save moment 专用）。`DESIGN.md` 为唯一真源。Logo = amber soft bloom（image-gen 定稿）+ `lope` wordmark。Icon 套图（16/32/48/128，small 用 seed+halo）已生成、true-alpha。三字体 self-host（General Sans / Geist / Geist Mono，woff2，136K，OFL 随包）。popup/welcome/options/toast 全 migrate，WCAG AA 过审（2× opus-4.8 agent 审完修完）。
+  - **OAuth worker 安全修复（P0）**：旧 worker = open redirector + token 走 query string（可被钓鱼到攻击者 extension）。修法：extension-id allowlist（fail closed）+ state nonce（防 login-CSRF）+ token 走 URL fragment（不进日志/历史）。extension 侧向后兼容旧 worker。⚠️ **需部署**：填 `worker/wrangler.toml` 的 `ALLOWED_EXTENSION_IDS` 再 `wrangler deploy`。
+  - **代码 hygiene**：删重复 `background/notionApi.ts`（categoryCache 改指 `destinations/notion.ts`）；notionFetch 429 加重试上限；envelope href gate 掉 `javascript:`/`data:`；Obsidian fetch 加 10s timeout。
+  - typecheck + build 绿；store 材料（listing copy / privacy / promo tile / 3 张 1280×800 截图 / lope.zip v1.4）已备。
 - **Lope rebrand**（2026-04-27）— extension 改名 Lope（manifest / package / DB title / UI copy / docs）。OAuth Worker URL 留旧子域（renaming = 重新部署 + Notion integration callback 更新，单独运维任务）。
 - **M1 — `SiteProfile` content pipeline**（2026-04-25 → 2026-04-26，commits `78d3cf2` → `cc11e38`）
   - 5 平台 profile：x / wechat / xhs / zhihu / generic（Mozilla Readability）
@@ -25,7 +31,7 @@
 
 ## 🧊 Lope deferred items（下次碰 Lope 时处理）
 
-- **Rotate Notion token** — 当前 token 在本会话 transcript 里曝光过
+- ~~Rotate Notion token~~ — 已作废（旧 token 已过期，无需处理）
 - **`sync.py` nit 1**: `if type_ == "thread"` / `"quote-tweet"` 比较是 lowercase，但 v1.2 写的是 `Thread` / `Quote Tweet`。Fix: `type_.lower()`
 - **`sync.py` nit 2**: Author field 存的是 display name 不是 handle。Fix: 从 URL 解析 `/{handle}/`
 
@@ -47,19 +53,19 @@
 
 ## 🎯 现在应该做的事（按优先级）
 
-### 🥇 M2 — Reflex Save UX（1 周 CC）
+### 🥇 v1.4 Web Store 提交（撤换 v1.2/v1.3 在审）
 
-设计：`Cmd+Shift+S` → toast → done，5 平台共用一条 reflex 路径。Popup 保留作 secondary（点击图标进入，留 category/tags 可编辑）。
+**Gate（必须先做）**：部署修好的 OAuth worker —— 填 `worker/wrangler.toml` `ALLOWED_EXTENSION_IDS`（dev ID + 发布 ID）+ `wrangler deploy`。不部署 = token-theft 漏洞带着上线。
 
-不删 popup form——95% 走 reflex 是默认，5% 想 save-time 控制的人有救济通道。
+然后：
+- 材料已备（`docs/STORE_LISTING.md` v1.4 copy、`PRIVACY.md`、`docs/screenshots/store/` promo+3 shots、`lope.zip`）。
+- 仍需**真机截图** 3 张（envelope 粘进真 chat / 真 WeChat·XHS·Zhihu / Notion 里 XHS 结果带 Tags+Location）—— 渲染 mockup 替不了。
+- PRIVACY.md 挂公网 URL（raw GitHub 可）填进表单。
+- 上传 `lope.zip` + 填表（single-purpose / data-use 都在 listing 里）。
 
-ship 为 v1.4 internal。
+### 🥈 commit 本 session（envelope + rebrand + 安全 + store 材料，未 commit）
 
-### 🥈 v1.3 Web Store 重新提交
-
-- 更新 `docs/STORE_LISTING.md` 用 Lope copy + 多平台说明 + scripting permission 解释
-- Build + zip + 提交（撤掉/取代 v1.2 的审核）
-- 新 install warning：从"仅 X.com"扩到"X / WeChat / XHS / Zhihu" + scripting permission（按需注入 generic）
+建议拆：`feat(handoff)` envelope+Copy/Save · `feat(rebrand)` Soft Bloom+fonts · `fix(security)` OAuth worker · `chore(store)` v1.4 材料。
 
 ### 🥉 Lope deferred 3 项
 

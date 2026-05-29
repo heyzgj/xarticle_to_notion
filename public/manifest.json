@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Lope — Save now, your agent reads later",
   "short_name": "Lope",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Save now. Your agent reads later. Clip X, WeChat, Xiaohongshu, Zhihu, and any article to your AI's memory.",
   "permissions": ["storage", "activeTab", "tabs", "scripting"],
   "host_permissions": [

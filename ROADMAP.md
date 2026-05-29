@@ -46,19 +46,27 @@ Lope is a personal content pipeline: you clip from the web, it lands in your kno
   - 6 saves enriched, INDEX built; cross-session recall live
 - **Rebrand to Lope** — name / copy / Notion DB title / package / manifest. OAuth Worker URL stays on the legacy subdomain pending an ops migration.
 
+### v1.4 — Agent hand-off + visual identity + security (2026-05-29)
+- **Clipboard envelope hand-off** — save copies a Markdown envelope (frontmatter + body + image refs + `notion_url`) to the clipboard; paste into any AI chat, no Notion connector needed. Popup split into Copy (clipboard only) + Save to Notion (persist). Reflex `Cmd+Shift+S` = save + copy + toast.
+- **Soft Bloom identity** — retired Twitter-blue for warm ink/paper + amber (save-moment only). `DESIGN.md` is the source of truth. Amber soft-bloom logo + `lope` wordmark; true-alpha icon set (seed+halo at 16/32); General Sans / Geist / Geist Mono self-hosted (woff2, OFL bundled). All surfaces migrated, WCAG AA.
+- **OAuth worker security (P0)** — extension-ID allowlist (fail closed) + state nonce (login-CSRF) + token via URL fragment. ⚠️ needs deploy with `ALLOWED_EXTENSION_IDS` set.
+- **Hygiene** — removed duplicate `notionApi.ts`; 429 retry ceiling; envelope href scheme-gating; Obsidian fetch timeout.
+
 ---
 
 ## Active
 
+### v1.4 Web Store submission (the immediate goal)
+- [ ] **Deploy gate** — set `worker/wrangler.toml` `ALLOWED_EXTENSION_IDS` (dev + published ID) and `wrangler deploy` the hardened OAuth worker. Token-theft fix is inert until deployed.
+- [ ] 3 real-data screenshots (envelope-in-chat, real WeChat/XHS/Zhihu, Notion result) — mockups can't substitute. Drafted set + promo tile in `docs/screenshots/store/`.
+- [ ] Host `PRIVACY.md` at a public URL; paste into the store form.
+- [ ] Upload `lope.zip` (v1.4) + fill form from `docs/STORE_LISTING.md` (copy/single-purpose/data-use all drafted).
+
 ### Lope deferred items (next time touching Lope)
-- [ ] Rotate Notion token (exposed in 2026-04-26 transcript; user opted ship-now-rotate-later)
+- [x] ~~Rotate Notion token~~ — dropped; the old token already expired, no action needed
 - [ ] `sync.py` nit 1: `type_.lower()` in compares (Thread / Quote Tweet vs lowercase)
 - [ ] `sync.py` nit 2: Author should be handle, not display name (parse from URL `/{handle}/`)
-
-### v1.3 ship items
-- [ ] Update Chrome Web Store listing copy (Lope name, multi-platform tagline, scripting permission rationale)
-- [ ] Resubmit to Web Store (was v1.2 in review; v1.3 is a meaningful re-review)
-- [ ] Lope visual identity — monochrome icon set (16/32/48/128). Currently still using v1.2 icons.
+- [ ] OAuth worker subdomain rename (`x2notion-oauth` → `lope-oauth`) — fold into the deploy above if doing it
 
 ---
 

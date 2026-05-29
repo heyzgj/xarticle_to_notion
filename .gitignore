@@ -3,7 +3,8 @@ dist/
 .DS_Store
 .firecrawl/
 *.map
-x2notion*.zip
+*.zip
 .playwright-mcp/
+spike/
 worker/node_modules/
 worker/.wrangler/

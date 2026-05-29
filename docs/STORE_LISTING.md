@@ -1,6 +1,6 @@
 # Chrome Web Store Listing Copy
 
-Ready-to-paste text for the Chrome Web Store submission form. Update for v1.3 (Lope rebrand + multi-platform).
+Ready-to-paste text for the Chrome Web Store submission form. **v1.4 — Lope rebrand (Soft Bloom identity) + clipboard hand-off + reflex save.**
 
 ---
 
@@ -21,22 +21,20 @@ Alt options:
 ## Short description (max 132 chars)
 
 ```
-Save now. Your agent reads later. Clip X, WeChat, Xiaohongshu, Zhihu, and any article to your AI's memory.
+Clip X, WeChat, 小红书, Zhihu & any article to Notion or Obsidian — or copy it straight into ChatGPT, Claude, or Cursor.
 ```
 
-(108 chars)
+(116 chars)
 
 Alt options:
-- `One-click web clipper for AI agents. Save X / WeChat / Xiaohongshu / Zhihu / any article to Notion or Obsidian.` (110)
-- `Curate the web for your AI. Save articles, threads, and notes to a structured pile your agent reads later.` (107)
+- `Save now. Your agent reads later. One-click web clipper that structures the web for your AI — Notion, Obsidian, or clipboard.` (123)
+- `One-click save for AI agents. Clip X / WeChat / 小红书 / Zhihu to Notion or Obsidian, or paste it into any chatbot.` (112)
 
 ---
 
 ## Category
 
-**Productivity**
-
-(Secondary if available: Tools)
+**Productivity** (secondary: Tools)
 
 ---
 
@@ -51,7 +49,13 @@ English (with Chinese platform support)
 ```
 Save anything you read on the web to a structured pile your AI agent can actually use — X articles, X threads, single tweets, quote tweets, WeChat 公众号 articles, Xiaohongshu notes (with images, tags, and location), Zhihu articles and answers, plus any Readability-friendly article on any other site.
 
-Lope is for people who run a personal AI agent (Claude Code, OpenClaw, Hermes, custom MCP setup) and want their saved reading to feed that agent's memory. Instead of bookmarking into a graveyard, send everything you read straight to a structured database with title, author, published date, full text, images, tags, and location preserved — formatted so the agent can parse it, not just humans.
+Lope is for people who work with AI agents (Claude, ChatGPT, Cursor, Codex, custom MCP setups) and want what they read to feed those agents. Instead of bookmarking into a graveyard, send everything you read to a structured database — title, author, date, full text, images, tags, location preserved — formatted so an agent can parse it, not just a human.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HAND IT STRAIGHT TO YOUR AI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Lope's fastest path skips the database entirely. Hit Copy (or Cmd/Ctrl+Shift+S) and Lope puts a clean Markdown "envelope" on your clipboard — YAML frontmatter (title, author, source, URL) plus the full article body with images preserved. Paste it into ChatGPT, Claude, Cursor, or any chatbot and ask your question immediately. No connector to wire up, no "go fetch this URL," no OAuth dance — the content is just there, structured, ready to reason over.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHAT IT SAVES
@@ -67,52 +71,48 @@ WHAT IT SAVES
 WHERE IT SAVES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+✦ Your clipboard — a paste-ready Markdown envelope for any AI chat (no setup at all)
 ✦ Notion — connect with OAuth, pick a database, done. Or let us create one for you.
 ✦ Obsidian — local-first via the Obsidian Local REST API plugin. Markdown files with YAML frontmatter (Dataview-ready).
-✦ Both at once — fan out simultaneously.
+✦ Notion + Obsidian at once — fan out simultaneously.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHAT MAKES IT DIFFERENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✦ One-click save (or Cmd/Ctrl+Shift+S). See the content, click, done.
+✦ Two verbs, no friction. Copy grabs the Markdown envelope for your AI. Save to Notion files it in your knowledge base. Pick per save.
+
+✦ Reflex save. Press Cmd/Ctrl+Shift+S on any supported page — Lope saves and copies in one motion, confirms with a quiet toast, and you keep moving. No popup, no form.
 
 ✦ No API keys for Notion. Connect with the official OAuth flow and pick your database from a dropdown.
 
-✦ Five platform-specific extractors. Each one is hand-built for its platform's quirks — WeChat's lazy-loaded images, Xiaohongshu's structured JSON state, Zhihu's semantic-meta tags, X's thread/quote-tweet logic. The generic Readability fallback handles everything else.
+✦ Five platform-specific extractors. Each is hand-built for its platform's quirks — WeChat's lazy-loaded images, Xiaohongshu's structured state, Zhihu's semantic tags, X's thread/quote-tweet logic. The generic Readability fallback handles everything else.
 
-✦ Agent-ready structure. Saved content uses consistent properties (Type, Source, Author, Published) and parse-safe markers — designed to be readable by AI agents, not just humans.
+✦ Agent-ready structure. Consistent properties (Type, Source, Author, Published) and parse-safe markers — built to be read by AI, not just humans.
 
 ✦ Duplicate detection. If a URL is already saved, you get one click to open the existing entry.
 
-✦ Private by design. Your tokens stay in your browser. We don't run servers that see your data. Zero analytics. Zero telemetry.
+✦ Private by design. Your tokens stay in your browser. We run no server that sees your content. Zero analytics. Zero telemetry.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HOW IT WORKS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 1. Install the extension. A welcome tab opens.
-2. Connect to Notion (OAuth) and/or Obsidian (paste your Local REST API key).
-3. Visit any supported page. Click the extension icon (or press Cmd/Ctrl+Shift+S). Hit Save.
+2. (Optional) Connect to Notion (OAuth) and/or Obsidian (paste your Local REST API key). Skip this entirely if you only want the clipboard hand-off.
+3. Visit any supported page. Click the icon (or press Cmd/Ctrl+Shift+S). Hit Copy to grab it for your AI, or Save to Notion to file it.
 
-Your saved content appears in your destination(s) with:
-• Title
-• Author + handle (where the platform exposes one)
-• Published date
-• Full structured content with formatting
-• Images
-• Tags + location (Xiaohongshu)
-• Type (Article / Thread / Tweet / Quote Tweet / Note / Video / Answer)
-• Source (X / WeChat / Xiaohongshu / Zhihu / generic)
-• Tweet count (threads)
-• Source URL
+Your saved content carries:
+• Title • Author + handle • Published date • Full structured body with formatting • Images
+• Tags + location (Xiaohongshu) • Type (Article / Thread / Tweet / Quote Tweet / Note / Video / Answer)
+• Source (X / WeChat / Xiaohongshu / Zhihu / generic) • Tweet count (threads) • Source URL
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PERMISSIONS — WHY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 • Storage — remember your Notion connection and (optional) Obsidian credentials locally
-• Active tab — read the content you're currently viewing when you click the icon
+• Active tab — read the content you're viewing when you click the icon
 • Tabs — open your saved page after save
 • Scripting — inject the generic Readability extractor on demand when you save from a non-platform site (only fires on click; never auto-runs across pages)
 • x.com / twitter.com / mp.weixin.qq.com / xiaohongshu.com / zhihu.com — detect and extract content
@@ -123,9 +123,9 @@ PERMISSIONS — WHY
 PRIVACY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-We collect nothing. We store nothing. We see nothing. Tokens stay in your browser's local storage; content goes directly from your browser to your destination. The only server we operate is a stateless OAuth proxy required by Notion's API spec — it never holds or logs your data.
+We collect nothing. We store nothing. We see nothing. Tokens stay in your browser's local storage; content goes directly from your browser to your destination (or your clipboard). The only server we operate is a stateless OAuth proxy required by Notion's API spec — it never holds or logs your data.
 
-Full privacy policy: [your hosted URL]
+Full privacy policy: https://raw.githubusercontent.com/heyzgj/xarticle_to_notion/main/PRIVACY.md
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 FEEDBACK
@@ -136,35 +136,37 @@ Found a bug? Have a feature idea? Open an issue at github.com/heyzgj/xarticle_to
 
 ---
 
-## Screenshots checklist
+## Screenshots — DONE (all rebranded to Soft Bloom)
 
-Chrome Web Store requires 1280×800 or 640×400 PNG/JPG. Provide at least 1, ideally 3-5.
+The full set is in `docs/screenshots/store/`, 1280×800, warm ink/paper, real bundled fonts. The old v1.2-era Twitter-blue shots have been deleted. Upload in this order:
 
-Recommended shots for v1.3:
+1. `01-hero-1280x800.png` — value prop ("Save it. Or hand it to your AI.") + popup Copy / Save to Notion
+2. `02-reflex-1280x800.png` — reflex save: ⌘⇧S keycaps + amber "Saved · Copied" toast
+3. `03-welcome-1280x800.png` — onboarding (real page): Soft Bloom mark + ink "Connect to Notion" CTA
+4. `04-options-1280x800.png` — settings: Notion + Obsidian connected, "Notion, Obsidian, or both."
+5. `05-success-1280x800.png` — post-save popup: "Copied" + "Open in Notion" ("One click. Two destinations.")
 
-1. **Hero** — Popup open on a real X article, showing preview card and big "Save" button
-2. **Multi-platform** — Side-by-side: same Save flow on WeChat / Xiaohongshu / Zhihu (one composite image)
-3. **Save success** — Popup after save, showing the green "Open in Notion" button
-4. **Welcome tab** — Onboarding with "Connect to Notion" CTA and privacy line
-5. **Database choice** — The "Create Lope for me" recommended card
-6. **Notion result** — A saved Xiaohongshu note inside Notion showing tags + location properties
+Promo tile: `promo-tile-440x280.png` (Soft Bloom — bloom + wordmark on warm ink).
+
+> Optional future swap-ins (real captures, only if you want platform authenticity): envelope pasted into a live ChatGPT/Claude chat; the Save flow on a real WeChat/小红书/Zhihu page; a saved 小红书 note in Notion with Tags+Location. Not required — the branded set above is submission-ready.
 
 ---
 
-## Promotional tile (optional, recommended)
+## Promotional tile
 
-440×280 PNG. Lope visual identity is monochrome — stay away from purple. Suggested:
-- Black or near-black background
-- Lope wordmark in large white sans
-- Tagline below in muted gray: "Save now. Your agent reads later."
-- No icons / illustrations until the icon-redesign pass lands
+440×280 PNG (small tile) — generated at `docs/screenshots/store/promo-tile-440x280.png`. **Soft Bloom identity:**
+- Warm ink background (`#1A1916`)
+- `lope` wordmark in General Sans, warm off-white (`#FAF8F3`)
+- The amber Soft Bloom mark (`#D98A2B`) to the left of the wordmark
+- Tagline in muted warm gray: "Save now. Your agent reads later."
+- Marquee tile (1400×560) optional, same system.
 
 ---
 
 ## Category tags (max 5)
 
 ```
-notion, obsidian, knowledge-base, ai-agent, web-clipper
+notion, obsidian, ai-agent, web-clipper, knowledge-base
 ```
 
 ---
@@ -195,5 +197,16 @@ Host `PRIVACY.md` somewhere public. Current:
 ## Single purpose description (Chrome Web Store asks)
 
 ```
-Lope has one purpose: saving content from the web — primarily X (Twitter) articles/threads/tweets, WeChat 公众号 articles, Xiaohongshu notes, Zhihu articles/answers, and any other Readability-compatible article — to a user's personal knowledge base. The user picks Notion (via OAuth) or a local Obsidian vault (via the Local REST API plugin) as their destination. When the user invokes the extension on a supported page, it reads the content from the current tab and sends it directly to the configured destination using credentials stored locally in the user's browser.
+Lope has one purpose: saving content from the web — primarily X (Twitter) articles/threads/tweets, WeChat 公众号 articles, Xiaohongshu notes, Zhihu articles/answers, and any other Readability-compatible article — to a user's personal knowledge base or clipboard. The user picks Notion (via OAuth), a local Obsidian vault (via the Local REST API plugin), or a copy-to-clipboard Markdown export as the destination. When the user invokes the extension on a supported page, it reads the content from the current tab and sends it directly to the configured destination using credentials stored locally in the user's browser.
 ```
+```
+
+---
+
+## Data-use disclosures (Chrome Web Store privacy tab)
+
+Check these to match actual behavior:
+- ☑ Does NOT sell or transfer user data to third parties (beyond approved use cases)
+- ☑ Does NOT use/transfer data for purposes unrelated to the single purpose
+- ☑ Does NOT use/transfer data to determine creditworthiness / lending
+- Data collected: **none** leaves the browser except to the user's chosen destination (Notion API / local Obsidian). Declare "Website content" as handled-but-not-collected-by-developer (transmitted directly to the user's own destination, never to us).
