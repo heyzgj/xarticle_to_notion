@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-ui);
   font-size: 14px;
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -13,7 +13,7 @@ body {
 }
 
 ::selection {
-  background: rgba(29, 155, 240, 0.15);
+  background: rgba(217, 138, 43, 0.18);
 }
 
 /* Shared button styles */
@@ -94,7 +94,7 @@ body {
 }
 
 .input::placeholder {
-  color: #C9CDD3;
+  color: var(--text-disabled);
 }
 
 .input:focus {

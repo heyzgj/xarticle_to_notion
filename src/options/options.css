@@ -147,11 +147,11 @@ h1 {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: white;
+  background: var(--surface);
   left: 3px;
   top: 3px;
   transition: transform var(--duration-fast) ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(26, 25, 22, 0.18);
 }
 
 .toggle input:checked + .toggle-slider {
@@ -203,7 +203,7 @@ h1 {
   color: var(--text-primary);
   outline: none;
   transition: border-color var(--duration-fast) ease;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .field-input:focus {

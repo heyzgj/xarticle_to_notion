@@ -2,7 +2,7 @@
 @import '../shared/base.css';
 
 body {
-  background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+  background: var(--paper);
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -20,21 +20,11 @@ body {
   background: var(--surface);
   border-radius: var(--radius-2xl);
   padding: 36px 32px 32px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px rgba(26,25,22,0.05), 0 8px 24px rgba(26,25,22,0.05);
+  border: 1px solid var(--line);
   animation: fadeUp var(--duration-normal) var(--ease-standard) both;
   position: relative;
   overflow: hidden;
-}
-
-/* Subtle top accent bar */
-.step::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--brand) 0%, #60A5FA 100%);
 }
 
 .step[hidden] {
@@ -53,9 +43,10 @@ body {
 }
 
 .hero h1 {
+  font-family: var(--font-display);
   font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: -0.035em;
   line-height: 1.15;
   color: var(--text-primary);
   margin-bottom: 10px;
@@ -90,8 +81,9 @@ body {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, rgba(29, 155, 240, 0.1) 0%, rgba(96, 165, 250, 0.08) 100%);
-  color: var(--brand);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -122,8 +114,8 @@ body {
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  background: rgba(29, 155, 240, 0.05);
-  border: 1px solid rgba(29, 155, 240, 0.12);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
   margin-top: 12px;
   font-size: 12px;
@@ -133,8 +125,7 @@ body {
 
 .tip-box svg {
   flex-shrink: 0;
-  color: var(--brand);
-  opacity: 0.6;
+  color: var(--mute);
 }
 
 /* Privacy */
@@ -153,17 +144,18 @@ body {
   color: var(--text-disabled);
 }
 
-/* Check circle (database + done steps) */
+/* Check circle (database + done steps) — the onboarding "landed" moment IS the
+   amber bloom (per DESIGN.md: success = the bloom, not a generic green check). */
 .check-circle {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--success);
+  background: radial-gradient(circle at 50% 42%, #E5A24E, var(--amber) 70%);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 16px rgba(217, 138, 43, 0.30);
 }
 
 .check-path {
@@ -188,7 +180,7 @@ body {
   width: 100%;
   padding: 16px;
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 1px solid var(--line-2);
   border-radius: var(--radius-xl);
   text-align: left;
   cursor: pointer;
@@ -198,20 +190,20 @@ body {
 }
 
 .db-option:hover {
-  border-color: var(--brand);
-  background: rgba(29, 155, 240, 0.02);
-  box-shadow: 0 2px 8px rgba(29, 155, 240, 0.08);
+  border-color: var(--ink);
+  background: var(--paper-2);
+  box-shadow: var(--shadow-card);
 }
 
 .db-option--recommended {
-  border-color: var(--brand);
-  background: rgba(29, 155, 240, 0.03);
+  border-color: var(--ink);
+  background: var(--paper-2);
 }
 
 .db-option-badge {
   font-size: 11px;
   font-weight: 600;
-  color: var(--brand);
+  color: var(--ink);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 4px;
@@ -248,7 +240,7 @@ body {
   font-family: inherit;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5l3 3 3-3' stroke='%239CA3AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5l3 3 3-3' stroke='%239A9388' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 36px;
@@ -265,8 +257,9 @@ body {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #FEF3C7;
-  color: #B45309;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -291,6 +284,7 @@ body {
 
 .error-steps {
   background: var(--background);
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   display: flex;
@@ -313,13 +307,15 @@ body {
 }
 
 .error-step a {
-  color: var(--brand);
-  text-decoration: none;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-2);
+  text-underline-offset: 2px;
   font-weight: 500;
 }
 
 .error-step a:hover {
-  text-decoration: underline;
+  text-decoration-color: var(--ink);
 }
 
 .error-step-num {
@@ -327,7 +323,7 @@ body {
   height: 20px;
   border-radius: 50%;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-2);
   color: var(--text-secondary);
   font-size: 11px;
   font-weight: 700;

@@ -1,0 +1,42 @@
+/* Self-hosted brand fonts (MV3 CSP forbids CDN). Copied verbatim to dist/;
+   url() resolves at runtime relative to dist/fonts.css → dist/fonts/.
+   General Sans = display/wordmark (Fontshare, static weights).
+   Geist / Geist Mono = UI + agent payload (variable, one file each). */
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('fonts/GeneralSans-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  src: url('fonts/GeneralSans-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  src: url('fonts/GeneralSans-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('fonts/Geist.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('fonts/GeistMono.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}

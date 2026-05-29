@@ -98,3 +98,9 @@ Before implementing any new feature, ask:
 - **Rate limiting**: `notionFetch()` retries on 429 with `Retry-After` header
 - **Video source URLs**: X serves video via blob: URLs (session-only). Extract poster image + emit `[Video]` marker. The original URL is saved as a page property so agents can retrieve the source.
 - **Schema migration**: `knownProperties` is module-level cache (reset on service worker restart). This is intentional — migration runs at most once per background session.
+
+---
+
+## Design System
+
+Read `DESIGN.md` before any visual or UI work. It defines the locked aesthetic (warm "ink on paper" + amber accent), color tokens, type (General Sans / Geist / Geist Mono), spacing, and motion. The legacy Twitter-blue `#1D9BF0` and X letterform are retired. The pictorial logo mark is in image-gen exploration (brief in DESIGN.md appendix); until it lands, the `lope` wordmark is the identity. Do not deviate from DESIGN.md without explicit approval.
