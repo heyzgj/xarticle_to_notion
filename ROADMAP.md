@@ -64,8 +64,8 @@ Lope is a personal content pipeline: you clip from the web, it lands in your kno
 
 ### Lope deferred items (next time touching Lope)
 - [x] ~~Rotate Notion token~~ — dropped; the old token already expired, no action needed
-- [ ] `sync.py` nit 1: `type_.lower()` in compares (Thread / Quote Tweet vs lowercase)
-- [ ] `sync.py` nit 2: Author should be handle, not display name (parse from URL `/{handle}/`)
+- [x] ~~`sync.py` nit 1 (`type_.lower()`)~~ — already fixed in `~/.lope/sync.py:208`
+- [x] ~~`sync.py` nit 2 (author = handle)~~ — already fixed in `sync.py:194-201`
 - [ ] OAuth worker subdomain rename (`x2notion-oauth` → `lope-oauth`) — fold into the deploy above if doing it
 
 ---

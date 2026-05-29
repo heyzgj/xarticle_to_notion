@@ -32,8 +32,8 @@
 ## 🧊 Lope deferred items（下次碰 Lope 时处理）
 
 - ~~Rotate Notion token~~ — 已作废（旧 token 已过期，无需处理）
-- **`sync.py` nit 1**: `if type_ == "thread"` / `"quote-tweet"` 比较是 lowercase，但 v1.2 写的是 `Thread` / `Quote Tweet`。Fix: `type_.lower()`
-- **`sync.py` nit 2**: Author field 存的是 display name 不是 handle。Fix: 从 URL 解析 `/{handle}/`
+- ~~`sync.py` nit 1（type_.lower()）~~ — 已修（`~/.lope/sync.py:208` `raw_type.lower().replace(" ","_")`）
+- ~~`sync.py` nit 2（author handle）~~ — 已修（`sync.py:194-201` 优先 `@handle`，fallback display name）
 
 ## 🧊 Rebrand deferred items
 
