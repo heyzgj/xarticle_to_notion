@@ -4,31 +4,23 @@ Ready-to-paste text for the Chrome Web Store submission form. **v1.4 — Lope re
 
 ---
 
-## Name (max 45 chars)
+## Name (max 45 chars) — set via manifest `name`
 
 ```
-Lope — Save now, your agent reads later
+Lope - Web Clipper for your agents
 ```
 
-(40 chars)
-
-Alt options:
-- `Lope: Save the web to your AI's memory` (39)
-- `Lope — Web clipper for AI agents` (32)
+(34 chars) — the Chrome Web Store title is taken from the manifest `name` field, so this is set in `public/manifest.json`, not typed in the dashboard.
 
 ---
 
-## Short description (max 132 chars)
+## Short description (max 132 chars) — set via manifest `description`
 
 ```
-Clip X, WeChat, 小红书, Zhihu & any article to Notion or Obsidian — or copy it straight into ChatGPT, Claude, or Cursor.
+One-click save to your own knowledge base. Clip X & any web content to Notion or Obsidian, or paste it into any AI agents.
 ```
 
-(116 chars)
-
-Alt options:
-- `Save now. Your agent reads later. One-click web clipper that structures the web for your AI — Notion, Obsidian, or clipboard.` (123)
-- `One-click save for AI agents. Clip X / WeChat / 小红书 / Zhihu to Notion or Obsidian, or paste it into any chatbot.` (112)
+(~123 chars) — also taken from the manifest `description` field.
 
 ---
 
@@ -47,7 +39,7 @@ English (with Chinese platform support)
 ## Detailed description (max 16,000 chars — use ~1500)
 
 ```
-Save anything you read on the web to a structured pile your AI agent can actually use — X articles, X threads, single tweets, quote tweets, WeChat 公众号 articles, Xiaohongshu notes (with images, tags, and location), Zhihu articles and answers, plus any Readability-friendly article on any other site.
+Save anything you read on the web to a structured pile your AI agent can actually use — X articles, X threads, single tweets, quote tweets, WeChat articles, RedNote notes (with images, tags, and location), Zhihu articles and answers, plus any Readability-friendly article on any other site.
 
 Lope is for people who work with AI agents (Claude, ChatGPT, Cursor, Codex, custom MCP setups) and want what they read to feed those agents. Instead of bookmarking into a graveyard, send everything you read to a structured database — title, author, date, full text, images, tags, location preserved — formatted so an agent can parse it, not just a human.
 
@@ -62,9 +54,9 @@ WHAT IT SAVES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✦ X (Twitter) — long-form Articles, threads (numbered n/total), single tweets, quote tweets, video posters
-✦ WeChat 公众号 — full article body, author, published date, all images
-✦ Xiaohongshu (小红书) — note title, body, image gallery, hashtags, IP location
-✦ Zhihu (知乎) — articles and answers from zhuanlan.zhihu.com or question pages
+✦ WeChat — full article body, author, published date, all images
+✦ RedNote — note title, body, image gallery, hashtags, IP location
+✦ Zhihu — articles and answers from zhuanlan.zhihu.com or question pages
 ✦ Anywhere else — Mozilla Readability fallback for blogs, Substack, HN, Medium, etc.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -86,7 +78,7 @@ WHAT MAKES IT DIFFERENT
 
 ✦ No API keys for Notion. Connect with the official OAuth flow and pick your database from a dropdown.
 
-✦ Five platform-specific extractors. Each is hand-built for its platform's quirks — WeChat's lazy-loaded images, Xiaohongshu's structured state, Zhihu's semantic tags, X's thread/quote-tweet logic. The generic Readability fallback handles everything else.
+✦ Five platform-specific extractors. Each is hand-built for its platform's quirks — WeChat's lazy-loaded images, RedNote's structured state, Zhihu's semantic tags, X's thread/quote-tweet logic. The generic Readability fallback handles everything else.
 
 ✦ Agent-ready structure. Consistent properties (Type, Source, Author, Published) and parse-safe markers — built to be read by AI, not just humans.
 
@@ -104,8 +96,8 @@ HOW IT WORKS
 
 Your saved content carries:
 • Title • Author + handle • Published date • Full structured body with formatting • Images
-• Tags + location (Xiaohongshu) • Type (Article / Thread / Tweet / Quote Tweet / Note / Video / Answer)
-• Source (X / WeChat / Xiaohongshu / Zhihu / generic) • Tweet count (threads) • Source URL
+• Tags + location (RedNote) • Type (Article / Thread / Tweet / Quote Tweet / Note / Video / Answer)
+• Source (X / WeChat / RedNote / Zhihu / generic) • Tweet count (threads) • Source URL
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PERMISSIONS — WHY
@@ -148,7 +140,7 @@ The full set is in `docs/screenshots/store/`, 1280×800, warm ink/paper, real bu
 
 Promo tile: `promo-tile-440x280.png` (Soft Bloom — bloom + wordmark on warm ink).
 
-> Optional future swap-ins (real captures, only if you want platform authenticity): envelope pasted into a live ChatGPT/Claude chat; the Save flow on a real WeChat/小红书/Zhihu page; a saved 小红书 note in Notion with Tags+Location. Not required — the branded set above is submission-ready.
+> Optional future swap-ins (real captures, only if you want platform authenticity): envelope pasted into a live ChatGPT/Claude chat; the Save flow on a real WeChat/RedNote/Zhihu page; a saved RedNote note in Notion with Tags+Location. Not required — the branded set above is submission-ready.
 
 ---
 
@@ -197,7 +189,7 @@ Host `PRIVACY.md` somewhere public. Current:
 ## Single purpose description (Chrome Web Store asks)
 
 ```
-Lope has one purpose: saving content from the web — primarily X (Twitter) articles/threads/tweets, WeChat 公众号 articles, Xiaohongshu notes, Zhihu articles/answers, and any other Readability-compatible article — to a user's personal knowledge base or clipboard. The user picks Notion (via OAuth), a local Obsidian vault (via the Local REST API plugin), or a copy-to-clipboard Markdown export as the destination. When the user invokes the extension on a supported page, it reads the content from the current tab and sends it directly to the configured destination using credentials stored locally in the user's browser.
+Lope has one purpose: saving content from the web — primarily X (Twitter) articles/threads/tweets, WeChat articles, RedNote notes, Zhihu articles/answers, and any other Readability-compatible article — to a user's personal knowledge base or clipboard. The user picks Notion (via OAuth), a local Obsidian vault (via the Local REST API plugin), or a copy-to-clipboard Markdown export as the destination. When the user invokes the extension on a supported page, it reads the content from the current tab and sends it directly to the configured destination using credentials stored locally in the user's browser.
 ```
 ```
 

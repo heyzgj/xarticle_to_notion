@@ -1,7 +1,7 @@
 import type { SiteProfile, ArticleData, ArticleBlock } from '../types';
 
 /**
- * Xiaohongshu (RED) extractor — JSON-first.
+ * RedNote (Xiaohongshu / RED) extractor — JSON-first.
  *
  * The DOM-rendered note body is brittle and surrounded by anti-scraping noise
  * (comment trees, recommended notes, ICP footer). Instead, the canonical note
@@ -38,7 +38,7 @@ export const xhs: SiteProfile = {
       publishedDate: note.time ? new Date(note.time).toISOString() : '',
       url,
       body,
-      site: 'Xiaohongshu',
+      site: 'RedNote',
       siteHandle: note.user?.userId,
       tags,
       location: note.ipLocation || undefined,

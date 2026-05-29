@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Lope — Save now, your agent reads later",
+  "name": "Lope - Web Clipper for your agents",
   "short_name": "Lope",
   "version": "1.4.0",
-  "description": "Save now. Your agent reads later. Clip X, WeChat, Xiaohongshu, Zhihu, and any article to your AI's memory.",
+  "description": "One-click save to your own knowledge base. Clip X & any web content to Notion or Obsidian, or paste it into any AI agents.",
   "permissions": ["storage", "activeTab", "tabs", "scripting"],
   "host_permissions": [
     "https://api.notion.com/*",

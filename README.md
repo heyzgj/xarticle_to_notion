@@ -2,13 +2,13 @@
 
 > Save now. Your agent reads later.
 
-Lope is a Chrome extension that clips articles, threads, tweets, and notes from across the web into a structured pile your AI agent can actually use. Five extractors out of the box (X, WeChat, Xiaohongshu, Zhihu, generic Readability fallback). Saves to Notion or Obsidian. No API keys for the common path — connect Notion once with OAuth and you're done.
+Lope is a Chrome extension that clips articles, threads, tweets, and notes from across the web into a structured pile your AI agent can actually use. Five extractors out of the box (X, WeChat, RedNote, Zhihu, generic Readability fallback). Saves to Notion or Obsidian. No API keys for the common path — connect Notion once with OAuth and you're done.
 
 ![Lope icon](public/icons/icon128.png)
 
 ## What it does
 
-- **One-click save** across X, WeChat, Xiaohongshu, Zhihu, and any Readability-friendly article
+- **One-click save** across X, WeChat, RedNote, Zhihu, and any Readability-friendly article
 - **Agent-first body** — clean paragraphs, structured metadata (Title / Author / Published / Type / Tags / Location), zero UI chrome
 - **OAuth onboarding** — Connect with Notion's official flow. Pick a database from a dropdown, or let us create one for you.
 - **Multi-destination** — Notion + Obsidian (Local REST API) simultaneously

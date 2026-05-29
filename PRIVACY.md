@@ -2,7 +2,7 @@
 
 **Last updated: 2026-05-29**
 
-Lope ("the extension") is a Chrome extension that saves web content — X (Twitter) articles, threads, tweets, and quote tweets; WeChat 公众号 articles; Xiaohongshu notes; Zhihu articles and answers; and any Readability-friendly article on any other site — to your personal Notion workspace, your local Obsidian vault, or your clipboard (as a Markdown export you paste into an AI chat). This policy explains what the extension does with your data — in plain English.
+Lope ("the extension") is a Chrome extension that saves web content — X (Twitter) articles, threads, tweets, and quote tweets; WeChat articles; RedNote notes; Zhihu articles and answers; and any Readability-friendly article on any other site — to your personal Notion workspace, your local Obsidian vault, or your clipboard (as a Markdown export you paste into an AI chat). This policy explains what the extension does with your data — in plain English.
 
 ## TL;DR
 
@@ -35,7 +35,7 @@ When you use **Copy** or the reflex shortcut (Cmd/Ctrl+Shift+S), the extension w
 - **No analytics.** The extension does not include any analytics, telemetry, crash reporting, or usage tracking.
 - **No remote code.** The extension bundles all its code. It does not download or execute any code at runtime.
 - **No user accounts.** There is no Lope account, login, password, or user database. You authenticate directly with Notion.
-- **No cross-site tracking.** Content scripts run only on the platforms listed in the manifest (X, WeChat, Xiaohongshu, Zhihu) and only read the page when you explicitly click the extension. The generic Readability fallback is injected on demand only when you click Save on an unsupported site — it never auto-runs.
+- **No cross-site tracking.** Content scripts run only on the platforms listed in the manifest (X, WeChat, RedNote, Zhihu) and only read the page when you explicitly click the extension. The generic Readability fallback is injected on demand only when you click Save on an unsupported site — it never auto-runs.
 
 ## The OAuth proxy
 
