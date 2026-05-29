@@ -30,6 +30,8 @@ export class ObsidianAdapter implements DestinationAdapter {
     const markdown = articleToMarkdown(article);
 
     try {
+      // Bound the request — a hung local Obsidian (app quit, plugin wedged)
+      // would otherwise leave the popup spinner stuck forever.
       const response = await fetch(`${host}/vault/${encodeURIPath(path)}`, {
         method: 'PUT',
         headers: {
@@ -37,6 +39,7 @@ export class ObsidianAdapter implements DestinationAdapter {
           'Content-Type': 'text/plain',
         },
         body: markdown,
+        signal: AbortSignal.timeout(10_000),
       });
 
       if (!response.ok) {

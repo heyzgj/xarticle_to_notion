@@ -1,5 +1,5 @@
 import { CATEGORY_CACHE_KEY, CATEGORY_CACHE_TTL } from '../utils/constants';
-import { getCategories as fetchCategories } from './notionApi';
+import { getCategories as fetchCategories } from './destinations/notion';
 
 interface CacheEntry {
   categories: string[];

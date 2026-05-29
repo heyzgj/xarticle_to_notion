@@ -51,7 +51,9 @@ export class NotionAdapter implements DestinationAdapter {
 
 // --- Notion API internals ---
 
-async function notionFetch(path: string, method: 'GET' | 'POST' | 'PATCH', body?: unknown): Promise<unknown> {
+const NOTION_MAX_429_RETRIES = 5;
+
+async function notionFetch(path: string, method: 'GET' | 'POST' | 'PATCH', body?: unknown, attempt = 0): Promise<unknown> {
   const settings = await getSettings();
   if (!settings) throw new Error('Extension not configured');
 
@@ -66,9 +68,13 @@ async function notionFetch(path: string, method: 'GET' | 'POST' | 'PATCH', body?
   });
 
   if (response.status === 429) {
+    // Bounded retry — never recurse forever on a stuck rate limit.
+    if (attempt >= NOTION_MAX_429_RETRIES) {
+      throw new Error('Notion API rate limit: retries exhausted');
+    }
     const retryAfter = parseInt(response.headers.get('Retry-After') ?? '1', 10);
     await sleep(retryAfter * 1000);
-    return notionFetch(path, method, body);
+    return notionFetch(path, method, body, attempt + 1);
   }
 
   if (!response.ok) {

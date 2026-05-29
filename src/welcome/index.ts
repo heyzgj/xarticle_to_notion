@@ -1,7 +1,7 @@
 import './welcome.css';
 import type { Message } from '../types/messages';
 import { saveSettings, getSettings } from '../utils/storage';
-import { OAUTH_WORKER_URL } from '../utils/constants';
+import { buildOAuthUrl, consumeOAuthNonce } from '../utils/oauth';
 
 // Step elements
 const stepConnect = document.getElementById('step-connect')!;
@@ -48,9 +48,9 @@ async function sendMessage(msg: Message): Promise<Message> {
   return chrome.runtime.sendMessage(msg);
 }
 
-function startOAuth() {
-  const extensionId = chrome.runtime.id;
-  window.location.href = `${OAUTH_WORKER_URL}/auth?extension_id=${extensionId}`;
+async function startOAuth() {
+  // Persist the nonce before navigating away.
+  window.location.href = await buildOAuthUrl();
 }
 
 async function handlePostOAuth() {
@@ -134,12 +134,28 @@ function showDoneStep(databaseName: string, parentPageName?: string) {
 }
 
 async function checkOAuthReturn() {
-  const params = new URLSearchParams(window.location.search);
-  const accessToken = params.get('access_token');
-  const workspaceName = params.get('workspace_name');
-  const workspaceId = params.get('workspace_id');
+  // New worker delivers the token in the URL fragment (#); fall back to the
+  // query string so a not-yet-redeployed worker still works during transition.
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const query = new URLSearchParams(window.location.search);
+  const src = hash.get('access_token') ? hash : query;
+
+  const accessToken = src.get('access_token');
+  const workspaceName = src.get('workspace_name');
+  const workspaceId = src.get('workspace_id');
+  const returnedNonce = src.get('nonce');
 
   if (accessToken) {
+    // CSRF: if the worker returned a nonce, it MUST match the one we generated.
+    // (No nonce ⇒ legacy worker; allowed during transition.)
+    const expected = await consumeOAuthNonce();
+    if (returnedNonce && (!expected || returnedNonce !== expected)) {
+      window.history.replaceState({}, '', window.location.pathname);
+      alert('Connection could not be verified. Please click Connect to try again.');
+      showStep(stepConnect);
+      return false;
+    }
+
     const existing = await getSettings();
     await saveSettings({
       ...existing,
@@ -149,6 +165,7 @@ async function checkOAuthReturn() {
       workspaceId: workspaceId ?? undefined,
     });
 
+    // Scrubs both query and fragment from the address bar / history.
     window.history.replaceState({}, '', window.location.pathname);
     await handlePostOAuth();
     return true;
