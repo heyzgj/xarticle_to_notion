@@ -1,7 +1,8 @@
 import './options.css';
 import type { Message } from '../types/messages';
 import { getSettings, saveSettings, getFormExpanded, setFormExpanded } from '../utils/storage';
-import { OAUTH_WORKER_URL, OBSIDIAN_DEFAULT_HOST, OBSIDIAN_DEFAULT_FOLDER } from '../utils/constants';
+import { OBSIDIAN_DEFAULT_HOST, OBSIDIAN_DEFAULT_FOLDER } from '../utils/constants';
+import { buildOAuthUrl } from '../utils/oauth';
 
 // --- Notion elements ---
 const statusConnected = document.getElementById('status-connected')!;
@@ -53,9 +54,10 @@ btnDisconnect.addEventListener('click', async () => {
   loadNotionStatus();
 });
 
-btnConnect.addEventListener('click', () => {
-  const extensionId = chrome.runtime.id;
-  window.location.href = `${OAUTH_WORKER_URL}/auth?extension_id=${extensionId}`;
+btnConnect.addEventListener('click', async () => {
+  // Same nonce-protected flow as the welcome page. The hardened worker rejects
+  // nonce-less /auth requests, so this must go through buildOAuthUrl().
+  window.location.href = await buildOAuthUrl();
 });
 
 // --- Obsidian ---
