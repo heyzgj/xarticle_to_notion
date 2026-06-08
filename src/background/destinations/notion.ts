@@ -386,19 +386,43 @@ function splitRichTextBlocks(
 
 // --- Database creation ---
 
-export async function createLopeDatabase(token: string): Promise<{ id: string; parentPageName: string }> {
-  const searchResult = await notionFetch('/search', 'POST', {
-    filter: { value: 'page', property: 'object' },
-    page_size: 1,
-  }) as { results: Array<{ id: string; properties?: Record<string, { title?: Array<{ plain_text: string }> }> }> };
+const SEARCH_RETRY_ATTEMPTS = 3;
+const SEARCH_RETRY_DELAY_MS = 1200;
 
-  if (searchResult.results.length === 0) throw new Error('NO_PAGES_SHARED');
+// Notion's /search is eventually consistent: a page the user just shared during
+// the OAuth grant can take a few seconds to appear. Retry before concluding
+// nothing is shared, so a fresh grant isn't false-negatived into recovery.
+async function searchFirstSharedPage(): Promise<{ id: string; properties?: Record<string, { title?: Array<{ plain_text: string }> }> } | null> {
+  for (let attempt = 0; attempt < SEARCH_RETRY_ATTEMPTS; attempt++) {
+    const res = await notionFetch('/search', 'POST', {
+      filter: { value: 'page', property: 'object' },
+      page_size: 1,
+    }) as { results: Array<{ id: string; properties?: Record<string, { title?: Array<{ plain_text: string }> }> }> };
+    if (res.results.length > 0) return res.results[0];
+    if (attempt < SEARCH_RETRY_ATTEMPTS - 1) await sleep(SEARCH_RETRY_DELAY_MS);
+  }
+  return null;
+}
 
-  const parentPage = searchResult.results[0];
+export async function createLopeDatabase(_token: string): Promise<{ id: string; parentPageName: string }> {
+  const parentPage = await searchFirstSharedPage();
+  if (!parentPage) throw new Error('NO_PAGES_SHARED');
+
   const parentPageName = extractPageTitle(parentPage) || 'your Notion workspace';
 
-  const result = await notionFetch('/databases', 'POST', {
+  // Create a dedicated "Lope" page under the shared page, then put the database
+  // inside it — Lope gets its own clean space and never writes into the user's
+  // existing page content.
+  const container = await notionFetch('/pages', 'POST', {
     parent: { type: 'page_id', page_id: parentPage.id },
+    icon: { type: 'emoji', emoji: '🌸' },
+    properties: {
+      title: { title: [{ type: 'text', text: { content: 'Lope' } }] },
+    },
+  }) as { id: string };
+
+  const result = await notionFetch('/databases', 'POST', {
+    parent: { type: 'page_id', page_id: container.id },
     title: [{ type: 'text', text: { content: 'Lope' } }],
     properties: {
       Title: { title: {} },
@@ -436,11 +460,19 @@ function extractPageTitle(page: {
 }
 
 export async function getAccessibleResourceCounts(): Promise<{ pages: number; databases: number }> {
-  const [pageResult, dbResult] = await Promise.all([
-    notionFetch('/search', 'POST', { filter: { value: 'page', property: 'object' }, page_size: 1 }) as Promise<{ results: unknown[] }>,
-    notionFetch('/search', 'POST', { filter: { value: 'database', property: 'object' }, page_size: 1 }) as Promise<{ results: unknown[] }>,
-  ]);
-  return { pages: pageResult.results.length, databases: dbResult.results.length };
+  // Same eventual-consistency guard as searchFirstSharedPage: retry while both
+  // come back empty, so a just-granted page isn't misread as "nothing shared".
+  for (let attempt = 0; attempt < SEARCH_RETRY_ATTEMPTS; attempt++) {
+    const [pageResult, dbResult] = await Promise.all([
+      notionFetch('/search', 'POST', { filter: { value: 'page', property: 'object' }, page_size: 1 }) as Promise<{ results: unknown[] }>,
+      notionFetch('/search', 'POST', { filter: { value: 'database', property: 'object' }, page_size: 1 }) as Promise<{ results: unknown[] }>,
+    ]);
+    const pages = pageResult.results.length;
+    const databases = dbResult.results.length;
+    if (pages > 0 || databases > 0) return { pages, databases };
+    if (attempt < SEARCH_RETRY_ATTEMPTS - 1) await sleep(SEARCH_RETRY_DELAY_MS);
+  }
+  return { pages: 0, databases: 0 };
 }
 
 export async function listDatabases(): Promise<Array<{ id: string; title: string }>> {

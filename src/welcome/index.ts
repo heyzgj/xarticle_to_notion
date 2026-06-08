@@ -12,6 +12,7 @@ const stepDone = document.getElementById('step-done')!;
 const btnConnect = document.getElementById('btn-connect')!;
 
 // Database step substates
+const dbHero = document.getElementById('db-hero')!;
 const dbChecking = document.getElementById('db-checking')!;
 const dbHasAccess = document.getElementById('db-has-access')!;
 const dbNoAccess = document.getElementById('db-no-access')!;
@@ -42,6 +43,9 @@ function showDbSubstate(state: 'checking' | 'hasAccess' | 'noAccess') {
   dbChecking.hidden = state !== 'checking';
   dbHasAccess.hidden = state !== 'hasAccess';
   dbNoAccess.hidden = state !== 'noAccess';
+  // The "Connected!" hero is misleading when we have no usable page — hide it in
+  // the recovery state so the user sees the fix, not a false success.
+  dbHero.hidden = state === 'noAccess';
 }
 
 async function sendMessage(msg: Message): Promise<Message> {
@@ -232,12 +236,15 @@ btnClose.addEventListener('click', () => {
 });
 
 // Init
-checkOAuthReturn().then(returned => {
-  if (!returned) {
-    getSettings().then(settings => {
-      if (settings?.notionApiToken && settings?.databaseId) {
-        showDoneStep(settings.databaseName ?? 'Lope');
-      }
-    });
+checkOAuthReturn().then(async returned => {
+  if (returned) return;
+  const settings = await getSettings();
+  if (settings?.notionApiToken && settings?.databaseId) {
+    // Fully set up — show the done state.
+    showDoneStep(settings.databaseName ?? 'Lope');
+  } else if (settings?.notionApiToken) {
+    // Half-finished (token but no database — e.g. tab closed mid-setup): resume
+    // at the database step instead of sending the user back to Connect.
+    await handlePostOAuth();
   }
 });

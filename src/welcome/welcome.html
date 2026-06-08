@@ -66,7 +66,7 @@
 
     <!-- Step 2: Choose database -->
     <div id="step-database" class="step" hidden>
-      <div class="hero">
+      <div class="hero" id="db-hero">
         <div class="check-circle animate-in">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path class="check-path" d="M10 16l4 4 8-8" stroke="#1A1916" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
@@ -115,14 +115,14 @@
           <div class="error-icon-circle">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/></svg>
           </div>
-          <h3 class="error-title">No pages shared yet</h3>
-          <p class="error-desc">It looks like you didn't pick any pages on Notion's permission screen. We need at least one page to save your articles into.</p>
+          <h3 class="error-title">Just one more step</h3>
+          <p class="error-desc">Notion only shares the pages you <strong>tick on its permission screen</strong> — creating a page in Notion isn't enough on its own; you have to select it there. Lope needs one page to live in.</p>
 
           <div class="error-steps">
             <div class="error-step"><span class="error-step-num">1</span> Click <strong>Try again</strong> below</div>
             <div class="error-step"><span class="error-step-num">2</span> On Notion's screen, click <strong>Select pages</strong></div>
-            <div class="error-step"><span class="error-step-num">3</span> Pick any page (or <a href="https://www.notion.so/" target="_blank">create a new one</a>)</div>
-            <div class="error-step"><span class="error-step-num">4</span> Click <strong>Allow access</strong></div>
+            <div class="error-step"><span class="error-step-num">3</span> Tick a page to share — want a clean space? <a href="https://www.notion.so/" target="_blank">Make an empty page</a> named "Lope" first, then pick it</div>
+            <div class="error-step"><span class="error-step-num">4</span> Click <strong>Allow access</strong> — we'll build your database inside it</div>
           </div>
 
           <button id="btn-reconnect" class="btn btn-primary btn-full" style="margin-top: 16px">Try again</button>
