@@ -4,7 +4,7 @@ export function createPipeline(profiles: SiteProfile[] = [], fallback?: SiteProf
   return {
     profiles,
     fallback,
-    run(doc, url) {
+    async run(doc, url) {
       const profile = profiles.find((p) => p.match(url));
       if (profile) return profile.extract(doc, url);
       return fallback?.extract(doc, url) ?? null;

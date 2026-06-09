@@ -1,5 +1,5 @@
 export type Source =
-  | 'x' | 'wechat' | 'xhs' | 'zhihu'
+  | 'x' | 'wechat' | 'xhs' | 'zhihu' | 'feishu'
   | 'substack' | 'medium' | 'reddit' | 'youtube'
   | 'generic';
 

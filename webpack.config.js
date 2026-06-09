@@ -12,6 +12,7 @@ module.exports = (env, argv) => {
       'content-wechat':  './src/content/platforms/wechat/index.ts',
       'content-xhs':     './src/content/platforms/xhs/index.ts',
       'content-zhihu':   './src/content/platforms/zhihu/index.ts',
+      'content-feishu':  './src/content/platforms/feishu/index.ts',
       // content-generic is injected on demand via chrome.scripting (popup
       // fallback), not declared in manifest content_scripts.
       'content-generic': './src/content/platforms/generic/index.ts',

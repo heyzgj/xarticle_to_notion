@@ -22,12 +22,14 @@ export interface SiteProfile {
   name: Source;
   match: (url: string) => boolean;
   detect?: (doc: Document, url: string) => ContentType;
-  extract: (doc: Document, url: string) => ArticleData | null;
+  // May be async: profiles like Feishu re-fetch the page to read the full
+  // embedded document model rather than scraping the virtualized DOM.
+  extract: (doc: Document, url: string) => ArticleData | null | Promise<ArticleData | null>;
   notionSchema?: Record<string, NotionPropertySpec>;
 }
 
 export interface Pipeline {
   profiles: SiteProfile[];
   fallback?: SiteProfile;
-  run(doc: Document, url: string): ArticleData | null;
+  run(doc: Document, url: string): Promise<ArticleData | null>;
 }

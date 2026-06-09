@@ -20,7 +20,7 @@ export function registerPipeline(
       void (async () => {
         try {
           if (readyCheck) await readyCheck();
-          const data = pipeline.run(document, window.location.href);
+          const data = await pipeline.run(document, window.location.href);
           sendResponse(
             data
               ? { type: 'ARTICLE_DATA', data }
