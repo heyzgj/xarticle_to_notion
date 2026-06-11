@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Lope - Web Clipper for your agents",
   "short_name": "Lope",
-  "version": "1.4.0",
-  "description": "One-click save to your own knowledge base. Clip X & any web content to Notion or Obsidian, or paste it into any AI agents.",
+  "version": "1.4.1",
+  "description": "You won't read it later — your AI will. Clip any page into agent-readable saves: Notion, Obsidian, or paste into any AI chat.",
   "permissions": ["storage", "activeTab", "tabs", "scripting"],
   "host_permissions": [
     "https://api.notion.com/*",

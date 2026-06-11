@@ -1,13 +1,13 @@
 {
   "name": "lope",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Chrome extension that saves the web (X / WeChat / Xiaohongshu / Zhihu / generic articles) to your agent's memory.",
   "private": true,
   "scripts": {
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production",
     "typecheck": "tsc --noEmit",
-    "package": "npm run typecheck && npm run build && cd dist && zip -r ../lope.zip . -x '*.DS_Store' && cd .. && echo '\\n✓ Packaged: lope.zip'"
+    "package": "npm run typecheck && npm run build && cd dist && zip -r ../lope.zip . -x '*.DS_Store' && cd .. && echo '\\n\u2713 Packaged: lope.zip'"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.287",
