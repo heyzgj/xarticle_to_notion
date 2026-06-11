@@ -7,7 +7,7 @@ Paste-ready answers for every field the dev console asks, tab by tab. Listing *c
 > Manifest facts these answers are built on (`public/manifest.json`):
 > - `permissions`: `storage`, `activeTab`, `tabs`, `scripting`
 > - `host_permissions`: `https://api.notion.com/*`, `https://127.0.0.1:27124/*`, `http://127.0.0.1:27123/*`
-> - content scripts: `x.com`, `twitter.com`, `mp.weixin.qq.com/s/*`, `www.xiaohongshu.com/explore/*` + `/discovery/item/*`, `zhuanlan.zhihu.com/p/*`, `www.zhihu.com/question/*/answer/*`
+> - content scripts: `x.com`, `twitter.com`, `mp.weixin.qq.com/s/*`, `www.xiaohongshu.com/explore/*` + `/discovery/item/*`, `zhuanlan.zhihu.com/p/*`, `www.zhihu.com/question/*/answer/*`, `*.feishu.cn` + `*.larkoffice.com` + `*.larksuite.com` (`/docx/*`, `/wiki/*`, `/docs/*`)
 > - `web_accessible_resources`: `welcome.html` → `<all_urls>`
 > - No remote code; all JS bundled.
 
@@ -16,7 +16,7 @@ Paste-ready answers for every field the dev console asks, tab by tab. Listing *c
 ## 1. Single purpose (one field)
 
 ```
-Lope is a web clipper with a single purpose: saving the content of the web page the user is actively viewing — articles, posts, threads, and notes from X, WeChat, RedNote, Zhihu, and any readable article — into a destination the user owns: their Notion database, their local Obsidian vault, or the system clipboard as Markdown. Every feature exists to capture the current page on an explicit user action and store it for the user (or their AI assistant) to reference later. The extension does nothing else — no browsing analytics, no background collection, no ads.
+Lope is a web clipper with a single purpose: saving the content of the web page the user is actively viewing — articles, posts, threads, notes, and cloud docs from X, WeChat, RedNote, Zhihu, Feishu/Lark, and any readable article — into a destination the user owns: their Notion database, their local Obsidian vault, or the system clipboard as Markdown. Every feature exists to capture the current page on an explicit user action and store it for the user (or their AI assistant) to reference later. The extension does nothing else — no browsing analytics, no background collection, no ads.
 ```
 
 ---
@@ -47,7 +47,7 @@ Used to inject, only when the user saves, two bundled scripts into the active ta
 ```
 - https://api.notion.com/* — to send the saved page to the user's own Notion workspace via the official Notion API. Used only when the user chooses to save to Notion.
 - https://127.0.0.1:27124/* and http://127.0.0.1:27123/* — to send the saved page to the user's own local Obsidian vault via the Obsidian Local REST API plugin running on their machine. Traffic stays on localhost; used only when the user saves to Obsidian.
-- Content scripts on x.com, twitter.com, mp.weixin.qq.com, xiaohongshu.com (RedNote) and zhihu.com — to detect and extract the article/post/note the user is viewing on these platforms when they click save. These scripts read the page only on an explicit user save gesture; they do not run in the background or exfiltrate data.
+- Content scripts on x.com, twitter.com, mp.weixin.qq.com, xiaohongshu.com (RedNote), zhihu.com, and feishu.cn / larkoffice.com / larksuite.com (Feishu/Lark cloud docs) — to detect and extract the article/post/note/doc the user is viewing on these platforms when they click save. These scripts read the page only on an explicit user save gesture; they do not run in the background or exfiltrate data.
 ```
 
 **`web_accessible_resources` — why `welcome.html` is exposed** (if asked / for reviewer notes)

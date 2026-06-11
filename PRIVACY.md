@@ -1,8 +1,8 @@
 # Privacy Policy — Lope
 
-**Last updated: 2026-05-29**
+**Last updated: 2026-06-12**
 
-Lope ("the extension") is a Chrome extension that saves web content — X (Twitter) articles, threads, tweets, and quote tweets; WeChat articles; RedNote notes; Zhihu articles and answers; and any Readability-friendly article on any other site — to your personal Notion workspace, your local Obsidian vault, or your clipboard (as a Markdown export you paste into an AI chat). This policy explains what the extension does with your data — in plain English.
+Lope ("the extension") is a Chrome extension that saves web content — X (Twitter) articles, threads, tweets, and quote tweets; WeChat articles; RedNote notes; Zhihu articles and answers; Feishu/Lark cloud docs you have access to; and any Readability-friendly article on any other site — to your personal Notion workspace, your local Obsidian vault, or your clipboard (as a Markdown export you paste into an AI chat). This policy explains what the extension does with your data — in plain English.
 
 ## TL;DR
 
@@ -53,7 +53,7 @@ The Worker exists only because Notion's OAuth spec requires a confidential clien
 - **`scripting`** — Inject the generic Readability extractor on demand when you save from a non-platform site. This permission is invoked only by your explicit click; the extension never injects scripts in the background or across pages.
 - **`https://api.notion.com/*`** — Send content directly to Notion's servers (only if you save to Notion).
 - **`https://127.0.0.1:27124/*` and `http://127.0.0.1:27123/*`** — Send content to your local Obsidian Local REST API plugin (only if you save to Obsidian; both endpoints stay on your own machine).
-- **Content scripts on `x.com` / `twitter.com` / `mp.weixin.qq.com/s/*` / `xiaohongshu.com/explore/*` / `xiaohongshu.com/discovery/item/*` / `zhuanlan.zhihu.com/p/*` / `zhihu.com/question/*/answer/*`** — Detect supported content on each platform and extract its content when you click Save.
+- **Content scripts on `x.com` / `twitter.com` / `mp.weixin.qq.com/s/*` / `xiaohongshu.com/explore/*` / `xiaohongshu.com/discovery/item/*` / `zhuanlan.zhihu.com/p/*` / `zhihu.com/question/*/answer/*` / `*.feishu.cn`, `*.larkoffice.com`, `*.larksuite.com` (doc pages)** — Detect supported content on each platform and extract its content when you click Save.
 
 ## Your choices
 

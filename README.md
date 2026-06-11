@@ -2,17 +2,27 @@
 
 > Save now. Your agent reads later.
 
-Lope is a Chrome extension that clips articles, threads, tweets, and notes from across the web into a structured pile your AI agent can actually use. Five extractors out of the box (X, WeChat, RedNote, Zhihu, generic Readability fallback). Saves to Notion or Obsidian. No API keys for the common path — connect Notion once with OAuth and you're done.
+Lope is a Chrome extension that clips articles, threads, tweets, notes, and cloud docs from across the web into a structured pile your AI agent can actually use. Six extractors out of the box (X, WeChat, RedNote, Zhihu, Feishu/Lark, generic Readability fallback). Saves to Notion or Obsidian. No API keys for the common path — connect Notion once with OAuth and you're done.
 
 ![Lope icon](public/icons/icon128.png)
 
 ## What it does
 
-- **One-click save** across X, WeChat, RedNote, Zhihu, and any Readability-friendly article
+- **One-click save** across X, WeChat, RedNote, Zhihu, Feishu/Lark, and any Readability-friendly article
 - **Agent-first body** — clean paragraphs, structured metadata (Title / Author / Published / Type / Tags / Location), zero UI chrome
 - **OAuth onboarding** — Connect with Notion's official flow. Pick a database from a dropdown, or let us create one for you.
 - **Multi-destination** — Notion + Obsidian (Local REST API) simultaneously
 - **Private by design** — Your token stays in your browser. No analytics, no servers see your content.
+
+## Your agent reads later
+
+Capture is only half the loop. Your saves land with queryable properties (`Type`, `Source`, `Author`, `Tags`, `Saved`), so any MCP-capable AI can answer from them — connect Notion's official MCP connector and ask:
+
+- *"What did I save about agent memory this week? Digest each in 3 bullets."*
+- *"Which authors do I keep saving? What was the last thing from each?"*
+- Morning briefing: a scheduled agent triages yesterday's saves before you're at your desk.
+
+Setup and more plays in [docs/RECIPES.md](docs/RECIPES.md). Everything runs in *your* AI — Lope never reads or analyzes your content.
 
 ## Install
 
